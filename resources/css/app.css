@@ -1,0 +1,291 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+	--primarycolor: #18364a;
+	--secondarycolor: #234053;
+	--darkcolor: #091b27;
+	--tintcolor: #2691e4;
+}
+
+@layer base {
+	body {
+	  @apply bg-[#dbe1e2] h-screen;
+	}
+}
+
+@layer components {
+	.text-dynamic-color {
+	    text-color: var(--primarycolor);
+	}
+	.bg-dynamic-color {
+	    background-color: var(--primarycolor);
+	}
+	.logotype {
+	    @apply block ps-1 lg:ps-0 w-[100px] h-[48px] bg-contain bg-no-repeat bg-center bg-[url(/img/w_logo.png)];
+	}
+	.container {
+	   @apply flex h-screen;
+	}
+	.content {
+	    @apply grow bg-[#f9f7f5];
+	}
+
+	/* SIDEBAR */
+	.sidebar {
+	    @apply bg-[#222d31] transition-all duration-300;
+	}
+	.sidebar ul {
+	    @apply list-none p-0;
+	}
+	.sidebar ul li {
+	    @apply opacity-75 hover:opacity-100;
+	}
+	.sidebar nav > ul > li  {
+	    @apply my-3 py-2 px-10 whitespace-nowrap relative;
+	}
+	.sidebar nav > ul > li:before  {
+	    content: "";
+	    width: 4px;
+	    height: 100%;
+	    position: absolute;
+	    left:0;
+	    top:0;
+	    background: transparent;
+	}
+
+	.sidebar nav > ul > li > ul > li {
+	    position: relative;
+	    padding-left: 32px;
+	}
+
+	.sidebar nav > ul > li > ul > li:before  {
+	    content: "";
+	    width: 4px;
+	    height: 4px;
+	    position: absolute;
+	    left:26px;
+	    top:50%;
+	    border-radius:50%;
+	    transform:translateY(-50%);
+	}
+
+	.sidebar li.active {
+	    background-color: var(--secondarycolor);
+	    opacity: 1 !important;
+	}
+
+	.sidebar li.active:before {
+	    background: #ffffff !important;
+	}
+
+	.sidebar li.active button, .sidebar li.active a {
+	    @apply text-white;
+	}
+
+	.sidebar button, .sidebar a {
+	    @apply flex items-center text-white;
+	}
+
+	.sidebar button svg, .sidebar a svg {
+	    @apply fill-white w-[24px] pe-1;
+	}
+
+	/* TABLE */
+
+	.table {
+	    @apply w-full border-collapse;
+	}
+
+	.table thead th {
+	    @apply text-white py-3 px-2 !border-0 !text-center;
+	    background-color: var(--primarycolor) !important;
+	}
+
+	.table thead tr th:first-child {
+	    @apply rounded-tl;
+	}
+
+	.table thead tr th:last-child {
+	    @apply rounded-tr;
+	}
+
+	.table thead tr th:not(:first-child) {
+	    border-left: 1px solid rgba(0,0,0,.5) !important;
+	}
+
+	.table thead tr th:not(:last-child) {
+	    border-right: 1px solid rgba(255,255,255,.1) !important;
+	}
+
+	.table tbody tr td {
+	    @apply py-3 px-2 !border-0;
+	}
+
+	.table tr {
+	    transition:0.5s background-color;
+	}
+
+	.table tbody tr:nth-child(even) {
+	    background-color: #dbe1e2 !important ; 
+	}
+
+	.table tbody tr:hover {
+	    background-color: #eaeceb !important; 
+	}
+
+
+	.menu-app {
+	    @apply z-10 w-[24px] h-[24px] bg-[length:24px_24px] bg-no-repeat bg-center bg-[url(/img/menu.png)] lg:!hidden;
+	}
+
+	.tabbar {
+	    @apply flex my-4;
+	}
+
+	.tabbar button {
+	    @apply px-8 py-2 text-center border border-slate-300 border-b-0 rounded-t-lg;
+	}
+
+	.tabbar button.active {
+	    background-color: var(--primarycolor); 
+	    @apply text-white;
+	}
+
+	/* RESPONSIVE */
+
+	@media (min-width: 769px) {
+	    .table td::before {
+	        display: none;
+	    }
+	}
+
+	/* Diseño móvil */
+	@media (max-width: 1023px) {
+	    .sidebar {
+	        width: 100%;
+	        height: 100%;
+	        position: fixed;
+	        top:0;
+	        left:-100%;
+	        z-index: 1;
+	    }
+	}
+
+	@media (max-width: 768px) {
+	   
+
+	    .table thead {
+	        display: none; /* Ocultamos los encabezados */
+	    }
+
+	    .table tr {
+	        display: block;
+	        margin-bottom: 15px;
+	        border: 1px solid #ddd;
+	        border-radius: 5px;
+	        padding: 10px;
+	    }
+
+	    .table td {
+	        display: block;
+	        padding: 8px;
+	        text-align: left;
+	        /*position: relative;
+	        padding-left: 50%;*/
+	    }
+
+	    .table td::before {
+	        content: attr(data-label);
+	        display: block;
+	        /*left: 10px;
+	        top: 8px;*/
+	        font-weight: bold;
+	        /*text-align: left;*/
+	        margin-bottom: 5px;
+	    }
+	}
+
+
+	/* BUTTON */
+
+	.button {
+	    @apply relative my-2 px-4 py-2 bg-[#edefed] inline hover:bg-[#eaeceb] flex items-center shadow-xl;
+	    border: 2px solid rgba(0,0,0,.02);
+	    text-color: var(--primarycolor);
+	}
+
+	.form-button {
+	    @apply relative my-2 px-4 py-2 text-white inline flex items-center shadow-xl;
+	    border: 2px solid rgba(0,0,0,.2);
+	    background-color: var(--primarycolor);
+	}
+
+	.form-button:hover  {
+		background-color: var(--darkcolor);
+	}
+
+	.float-button {
+	    @apply fixed rounded-full z-10 right-[8px] bottom-[8px] bg-[#edefed] hover:bg-[#eaeceb] w-[48px] h-[48px] shadow-xl;
+	}
+
+	.float-button:before {
+	    content: "";
+	    position: absolute;
+	    left: 50%;
+	    top: 50%;
+	    transform: translate(-50%,-50%);
+	    width: 24px;
+	    height:24px;
+	    background-color:var(--primarycolor);
+	    border-radius:50%;
+	    background-image:url('/img/add.png');
+	    background-repeat:no-repeat;
+	    background-size: 20px;
+	    background-position: center;
+	}
+
+	/* FORM ITEM */
+	.form-item {
+	    @apply w-full my-2 block;
+	}
+
+	.form-item > input {
+	    @apply p-[.35rem] w-full border border-slate-300 rounded;
+	}
+
+	.form-item > select {
+	    @apply p-[.40rem] w-full border border-slate-300 rounded;
+	}
+
+	.swal2-confirm {
+	    @apply !order-2;
+	}
+
+	.swal2-cancel {
+	    @apply !order-1;
+	}
+
+	select {
+	    background-color: #ffffff;
+	}
+
+	input[disabled], select[disabled] {
+	    background-color:#bdbdbb;
+	}
+
+	.v3dp__input_wrapper input {
+	    @apply border rounded p-2 w-full outline-0;
+	}
+
+}
+
+.swal2-confirm {
+    background-color: var(--primarycolor) !important;
+    order: 2;
+}
+
+.swal2-cancel {
+    background-color: #808080 !important;
+}

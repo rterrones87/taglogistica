@@ -1,0 +1,94 @@
+{
+    "id": 5,
+    "folio": "MTT20251212133439",
+    "type_maintenance_id": 4,
+    "description": "TEST",
+    "kms": "122",
+    "init_date": "2025-12-13T07:34:00.000Z",
+    "unit_id": 17,
+    "maintenance_status_id": 1,
+    "zombie": 0,
+    "created_at": "2025-12-12T13:34:39.000000Z",
+    "updated_at": "2025-12-12T13:34:39.000000Z",
+    "approvals_map": {
+        "maintenance_expenses": "pending"
+    },
+    "type_maintenance": {
+        "id": 4,
+        "name": "Siniestro",
+        "zombie": 0,
+        "created_at": "2025-08-11T16:50:03.000000Z",
+        "updated_at": "2025-08-11T16:50:03.000000Z"
+    },
+    "unit": {
+        "id": 17,
+        "type": 1,
+        "econame": "ECO02",
+        "brand": "FREIGHTLINER",
+        "model": "CASCADIA 2023",
+        "llantas": 22,
+        "trailer": null,
+        "TAG": "CPM-9021-ZX",
+        "active": 1,
+        "zombie": 0,
+        "created_at": "2025-09-26T23:47:52.000000Z",
+        "updated_at": "2025-09-27T19:20:20.000000Z"
+    },
+    "status": {
+        "id": 1,
+        "name": "Solicitado",
+        "zombie": 0,
+        "created_at": "2025-09-16T20:46:51.000000Z",
+        "updated_at": "2025-09-16T20:46:51.000000Z"
+    },
+    "inventory_requests": [
+        {
+            "id": 8,
+            "maintenance_id": 5,
+            "inventory_id": 10,
+            "quantity": 1,
+            "zombie": 0,
+            "created_at": "2025-12-12T13:34:39.000000Z",
+            "updated_at": "2025-12-12T13:34:39.000000Z",
+            "inventory": {
+                "id": 10,
+                "name": "ACEITE DE MOTOR 15W40",
+                "presentation": "CUBETA",
+                "brand": "MOBIL",
+                "quantity": 3,
+                "active": 1,
+                "zombie": 0,
+                "created_at": "2025-10-20T22:59:05.000000Z",
+                "updated_at": "2025-12-12T07:39:54.000000Z"
+            }
+        }
+    ],
+    "parts_supplier_requests": [
+        {
+            "id": 4,
+            "maintenance_id": 5,
+            "supplier_id": 13,
+            "request_type": 1,
+            "description": "CAMBIO DE ACEITE",
+            "quantity": 1,
+            "cost": "100",
+            "zombie": 0,
+            "created_at": "2025-12-12T13:34:39.000000Z",
+            "updated_at": "2025-12-12T13:34:39.000000Z",
+            "supplier": {
+                "id": 13,
+                "type": 2,
+                "name": "AUTOPARTES L\u00d3PEZ",
+                "taxID": "L\u00d3PEZ MART\u00cdN EDUARDO",
+                "company_type": 1,
+                "RFC": "LME780412C9R",
+                "zip": "44330",
+                "invoice_required": 1,
+                "active": 1,
+                "zombie": 0,
+                "created_at": "2025-09-26T23:39:01.000000Z",
+                "updated_at": "2025-09-26T17:24:57.000000Z"
+            }
+        }
+    ]
+}
