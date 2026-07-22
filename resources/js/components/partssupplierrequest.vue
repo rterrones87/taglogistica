@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import suggestioninput from './suggestioninput.vue';
 import TableAction from '@/components/TableAction.vue';
+import CurrencyInput from '@/components/CurrencyInput.vue';
 
 const props = defineProps({
   rows: { type: Array, default: () => [] },
@@ -33,7 +34,7 @@ watch(
 );
 
 function addRow() {
-  localRows.value.push({ supplier_id : 0, request_type :0, description : '', quantity: 0, cost : 0, supplier : {name:''} });
+  localRows.value.push({ supplier_id : 0, request_type :0, description : '', quantity: 0, cost : 0.00, supplier : {name:''} });
 }
 
 function removeRow(index) {
@@ -92,7 +93,12 @@ function removeRow(index) {
           </td>
           <td>
             <div class="form-item">
-              <input v-model="row.cost" :disabled="disabled"/>
+              <CurrencyInput
+                v-model="row.cost"
+                :min="0"
+                placeholder="0.00"
+                :disabled="disabled"
+              />
             </div>
           </td>
           <td>

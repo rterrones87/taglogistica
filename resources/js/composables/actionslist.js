@@ -5,8 +5,10 @@ export function actionslist(config) {
 
     const items = ref([]);
     const dialogs = config.dialogs;
+    let abortController = null;
+    let debounceTimer = null;
 
-    const loadItems = async (queryParams = {}) => {
+    const loadItems = async (queryParams = {}, { signal } = {}) => {
         try {
             dialogs.fire({
                 title: "Cargando...",
@@ -15,7 +17,10 @@ export function actionslist(config) {
                 didOpen: () => dialogs.showLoading()
             });
 
-            const response = await axios.get(`${config.endpoint}`, { params: queryParams }); 
+            const response = await axios.get(`${config.endpoint}`, { 
+                params: queryParams,
+                signal 
+            }); 
             
             // Manejar respuesta en formato objeto con {data, week_range} o array directo
             if (response.data && typeof response.data === 'object' && response.data.data !== undefined) {
@@ -30,6 +35,7 @@ export function actionslist(config) {
             return response.data;
             
         } catch (error) {
+            if (axios.isCancel(error)) return;
             console.error('Error al obtener los recursos:', error);
         } finally {
             dialogs.close();
@@ -37,7 +43,17 @@ export function actionslist(config) {
     };
 
     const loadFilteredItems = (queryParams = {}) => {
-      return loadItems(queryParams);
+      // Cancelar request anterior si existe
+      if (abortController) abortController.abort();
+      clearTimeout(debounceTimer);
+
+      return new Promise((resolve) => {
+        debounceTimer = setTimeout(async () => {
+          abortController = new AbortController();
+          const result = await loadItems(queryParams, { signal: abortController.signal });
+          resolve(result);
+        }, 300);
+      });
     };
     
     const deleteItem = async (id) => {

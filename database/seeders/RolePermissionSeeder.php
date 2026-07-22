@@ -96,6 +96,7 @@ class RolePermissionSeeder extends Seeder
                 'maintenances.edit',
                 'maintenances.delete',
                 'maintenances.change_state',
+                'maintenances.upload_evidence',
                 'units.view',
                 'units.create',
                 'units.edit',

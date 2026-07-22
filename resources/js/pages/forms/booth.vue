@@ -13,7 +13,12 @@
                 </div>
                 <div class="form-item">
                     <label>Costo de la caseta:</label>
-                    <input v-model="item.cost" type="number" required />
+                    <CurrencyInput
+                        v-model="item.cost"
+                        :min="0"
+                        placeholder="0.00"
+                        required
+                    />
                     <p v-if="errors.cost" class="text-red-500 text-sm">{{ errors.name[0] }}</p>
                 </div>
             </div>
@@ -31,6 +36,7 @@
     import { upsert } from '../../composables/upsert';
     import breadcrumb from '../../components/breadcrumb.vue';
     import FormAction from '@/components/FormAction.vue';
+    import CurrencyInput from '@/components/CurrencyInput.vue';
     
     const props = defineProps({
         isModal: {

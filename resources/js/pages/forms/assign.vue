@@ -1,5 +1,9 @@
 <template>
     <breadcrumb :items="breadcrumbItems"/>
+    
+    <!-- ServiceCard - Información del viaje -->
+    <ServiceCard v-if="item.id" :serviceId="item.id" />
+    
     <div class="m-4 bg-white p-4 rounded shadow-md">
 
         <h2 class="text-3xl my-4 font-bold text-center md:text-left">Asignar Viaje</h2>
@@ -17,105 +21,95 @@
 
         <form @submit.prevent="saveItem">
 
-            <h3 class="text-xl my-4 font-bold text-center md:text-left">Asignación para el flete</h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <div class="form-item">
-                    <label>Transporte:</label>
-                    <suggestioninput
-                    v-model="item.unit_id"
-                    url="units"
-                    valueKey="id"
-                    textKey="econame"
-                    :textValue="item.unit?.econame || ''"
-                    :disabled="item.state_id == 2 || hasOnlyDieselPermission"
-                    />
-                    <p v-if="errors.unit_id" class="text-red-500 text-sm">{{ errors.unit_id[0] }}</p>
-                </div>
-                <div class="form-item">
-                    <label>Operador:</label>
-                    <remoteselect
-                        v-model="item.operator_id"
-                        endpoint="operators"
-                        valueKey="id"
-                        textKey="name"
-                        :disabled="item.state_id == 2 || hasOnlyDieselPermission"
-                    />
-                    <p v-if="errors.operator" class="text-red-500 text-sm">{{ errors.operator[0] }}</p>
-                </div>
-                <div class="form-item">
-                    <label>Diesel Requerido:</label>
-                    <input v-model="item.diesel" type="text" :disabled="!canEditDiesel" required />
-                    <p v-if="errors.diesel" class="text-red-500 text-sm">{{ errors.diesel[0] }}</p>
-                </div>
-                
-            </div>
-
-            <h3 class="text-xl my-4 font-bold text-center md:text-left">
-                Asignación para 
-                <span v-if="item.type_operation == 1 || item.type_operation == 3">entrega de vacío</span>
-                <span v-if="item.type_operation == 2">recolección de vacio</span>
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <div class="form-item">
-                    <label>Transporte:</label>
-                    <suggestioninput
-                    v-model="item.aux_unit_id"
-                    url="units"
-                    valueKey="id"
-                    textKey="econame"
-                    :textValue="item.aux_unit?.econame || ''"
-                    :disabled="hasOnlyDieselPermission"
-                    />
-                    <!-- :disabled="item.state_id == 2" -->
-                    <p v-if="errors.unit_id" class="text-red-500 text-sm">{{ errors.aux_unit_id[0] }}</p>
-                </div>
-                <div class="form-item">
-                    <label>Operador:</label>
-                    <remoteselect
-                        v-model="item.aux_operator_id"
-                        endpoint="operators"
-                        valueKey="id"
-                        textKey="name"
-                        :disabled="hasOnlyDieselPermission"
-                    />
-                    <!-- :disabled="item.state_id == 2" -->
-                    <p v-if="errors.operator" class="text-red-500 text-sm">{{ errors.aux_operator[0] }}</p>
-                </div>
-            </div>
-
-            <template v-if="item.type_operation == 2">
+            <!-- Secciones dinámicas por tipo de operador -->
+            <div v-for="opType in operatorTypes" :key="opType.id">
                 <h3 class="text-xl my-4 font-bold text-center md:text-left">
-                    Asignación para ingreso de lleno
+                    Asignación para {{ opType.name }}
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <div class="form-item">
                         <label>Transporte:</label>
                         <suggestioninput
-                        v-model="item.aux2_unit_id"
-                        url="units"
-                        valueKey="id"
-                        textKey="econame"
-                        :textValue="item.aux2_unit?.econame || ''"
-                        :disabled="hasOnlyDieselPermission"
+                            v-if="operatorsMap[opType.id]"
+                            v-model="operatorsMap[opType.id].unit_id"
+                            url="units"
+                            valueKey="id"
+                            textKey="econame"
+                            :textValue="operatorsMap[opType.id].unit_name || ''"
+                            :disabled="
+                                (opType.is_main  && (item.state_id == 2 || hasOnlyDieselPermission)) ||
+                                (!opType.is_main && item.state_id > 4)
+                            "
                         />
-                        <!-- :disabled="item.state_id == 2" -->
-                        <p v-if="errors.unit_id" class="text-red-500 text-sm">{{ errors.aux2_unit_id[0] }}</p>
                     </div>
-                    <div class="form-item">
+                <div class="form-item">
                         <label>Operador:</label>
                         <remoteselect
-                            v-model="item.aux2_operator_id"
+                            v-if="operatorsMap[opType.id]"
+                            v-model="operatorsMap[opType.id].operator_id"
                             endpoint="operators"
                             valueKey="id"
                             textKey="name"
-                            :disabled="hasOnlyDieselPermission"
+                            :disabled="
+                                (opType.is_main  && (item.state_id == 2 || hasOnlyDieselPermission)) ||
+                                (!opType.is_main && item.state_id > 4)
+                            "
                         />
-                        <!-- :disabled="item.state_id == 2" -->
-                        <p v-if="errors.operator" class="text-red-500 text-sm">{{ errors.aux2_operator[0] }}</p>
+                    </div>
+                    <!-- Tarifa: solo para operadores no principales -->
+                    <div v-if="!opType.is_main" class="form-item">
+                        <label>Tarifa:</label>
+                        <select
+                            v-if="operatorsMap[opType.id]"
+                            v-model="operatorsMap[opType.id].rate_id"
+                            class="p-[.40rem] w-full border border-slate-300"
+                            :disabled="item.state_id > 4"
+                        >
+                            <option :value="null">-- Sin tarifa --</option>
+                            <option
+                                v-for="rate in (opType.rates || [])"
+                                :key="rate.id"
+                                :value="rate.id"
+                            >
+                                {{ rate.name }} — ${{ Number(rate.amount).toFixed(2) }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Diesel extra: solo para operadores no principales -->
+                    <div v-if="!opType.is_main" class="form-item">
+                        <label>Diesel Extra (litros):</label>
+                        <input
+                            v-if="operatorsMap[opType.id]"
+                            v-model="operatorsMap[opType.id].diesel"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0"
+                            class="p-[.40rem] w-full border border-slate-300"
+                            :disabled="
+                                operatorsMap[opType.id].diesel_status === 'pending' ||
+                                operatorsMap[opType.id].diesel_status === 'approved'
+                            "
+                        />
+                        <p v-if="operatorsMap[opType.id]?.diesel_status === 'pending'"
+                           class="text-yellow-600 text-sm mt-1">Aprobación pendiente</p>
+                        <p v-if="operatorsMap[opType.id]?.diesel_status === 'approved'"
+                           class="text-green-600 text-sm mt-1">Aprobado</p>
+                        <p v-if="operatorsMap[opType.id]?.diesel_status === 'rejected'"
+                           class="text-red-600 text-sm mt-1">Rechazado — puedes re-enviar</p>
                     </div>
                 </div>
-            </template>
+            </div>
+
+            <!-- Diesel (siempre visible) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
+                <div class="form-item">
+                    <label>Diesel Requerido:</label>
+                    <input v-model="item.diesel" type="text" :disabled="!canEditDiesel" />
+                    <p v-if="errors.diesel" class="text-red-500 text-sm">{{ errors.diesel[0] }}</p>
+                </div>
+            </div>
 
             <h3 class="text-xl my-4 font-bold text-center md:text-left">Contenedores</h3>
     
@@ -139,6 +133,7 @@
 <script setup>
     import { inject, ref, watch, computed } from "vue";
     import { useRoute, useRouter } from 'vue-router';
+    import axios from 'axios';
     import { upsert } from '../../composables/upsert';
     import { usePermissions } from '../../composables/usePermissions';
     import breadcrumb from '../../components/breadcrumb.vue';
@@ -146,6 +141,7 @@
     import suggestioninput from '../../components/suggestioninput.vue';
     import remoteselect from '../../components/remoteselect.vue';
     import FormAction from '@/components/FormAction.vue';
+    import ServiceCard from '@/components/ServiceCard.vue';
     import {approved} from "../../plugins/approvals";
     import SegmentedControl from '@/components/SegmentedControl.vue';
     
@@ -155,10 +151,58 @@
 
     const { item, isEditing, errors, saveItem } = upsert({
         endpoint: 'services',
-        data: { unit_id: 0,operator_id: 0, aux_unit_id: 0, aux_operator_id: 0, operator: {name: ""},unit: {econame: ""}, diesel: "", containers: [], state_id: 0, aux_operator: {name: ""}, aux_unit: {econame: ""}, aux_dos_operator: {name: ""}, aux_dos_unit: {econame: ""}},
+        data: { diesel: '', containers: [], state_id: 0, serviceOperators: [] },
         dialogs,
         redirectOnCreate: 'services'
     });
+
+    // Catálogo dinámico de tipos de operador
+    const operatorTypes = ref([]);
+    const operatorsMap  = ref({});
+
+    // Cargar tipos cuando se conoce el type_operation del servicio
+    // Nota: Laravel serializa las relaciones en snake_case, por eso usamos
+    // item.value.service_operators (no serviceOperators)
+    watch(() => item.value.type_operation, async (typeOp) => {
+        if (!typeOp) return;
+        const { data } = await axios.get(`service-operator-types?type_operation=${typeOp}`);
+        operatorTypes.value = data;
+        data.forEach(t => {
+            const existing = item.value.service_operators?.find(
+                so => so.service_operator_type_id == t.id
+            );
+            // Para auxiliares: buscar diesel previo vinculado a este service_operator
+            const dieselRecord = !t.is_main
+                ? item.value.diesel_history?.find(
+                    d => d.service_operator_id === existing?.id
+                  )
+                : null;
+
+            operatorsMap.value[t.id] = {
+                service_operator_type_id: t.id,
+                operator_id:   existing?.operator_id ?? null,
+                unit_id:       existing?.unit_id     ?? null,
+                unit_name:     existing?.unit?.econame ?? '',
+                rate_id:       existing?.rate_id     ?? null,
+                diesel:        dieselRecord?.amount  ?? null,
+                diesel_status: dieselRecord?.status  ?? null,
+            };
+        });
+    }, { immediate: true });
+
+    // Mantener item.value.operators sincronizado para que el composable upsert lo envíe
+    // Incluye rate_id (para amount_bonus) y diesel (para extra_diesel de auxiliares)
+    watch(operatorsMap, (newMap) => {
+        item.value.operators = Object.values(newMap)
+            .filter(op => op.operator_id)
+            .map(op => ({
+                service_operator_type_id: op.service_operator_type_id,
+                operator_id:              op.operator_id,
+                unit_id:                  op.unit_id ?? 0,
+                rate_id:                  op.rate_id ?? null,
+                diesel:                   op.diesel  ?? null,
+            }));
+    }, { deep: true });
 
     // Definir los elementos del breadcrumb
     const breadcrumbItems = [
@@ -200,33 +244,8 @@
         return hasAnyDieselPermission && isApproved;
     });
 
-    // Ref para saber si el operator_id ya existía al cargar (modo edición)
-    const hadInitialOperator = ref(false);
-    
-    // Detectar si ya venía con operator_id desde el endpoint
-    watch(() => item.value.operator_id, (newOperatorId) => {
-        if (newOperatorId && newOperatorId !== 0 && newOperatorId !== "" && newOperatorId !== "0") {
-            if (!hadInitialOperator.value) {
-                hadInitialOperator.value = true;
-            }
-        }
-    }, { immediate: true });
-    
-    // Watcher para auto-asignar el chofer principal a los campos auxiliares
-    // Solo funciona si NO había operator_id inicial (modo creación)
-    watch(() => item.value.operator_id, (newOperatorId) => {
-        // Si ya había un operator_id inicial, no hacer nada
-        if (hadInitialOperator.value) {
-            return;
-        }
-        
-        // Solo asignar en modo creación cuando se selecciona por primera vez
-        if (newOperatorId && newOperatorId !== 0 && newOperatorId !== "" && newOperatorId !== "0") {
-            item.value.aux_operator_id = newOperatorId;
-            item.value.aux2_operator_id = newOperatorId;
-            hadInitialOperator.value = true;
-        }
-    });
+    // Watch eliminado: ya no se auto-propaga operator_id a auxiliares
+    // La asignación ahora se maneja via operatorsMap dinámico
 
 </script>
   

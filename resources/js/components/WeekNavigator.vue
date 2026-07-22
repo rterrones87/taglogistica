@@ -9,6 +9,7 @@
       :format="dateFormat"
       :max-date="endDate || undefined"
       :disabled="disabled"
+      week-start="0"
       class="w-40"
     />
     <span class="text-gray-500">—</span>
@@ -21,6 +22,7 @@
       :format="dateFormat"
       :min-date="startDate || undefined"
       :disabled="disabled"
+      week-start="0"
       class="w-40"
     />
   </div>
@@ -71,21 +73,28 @@ const dateFormat = (date) => {
   return `${day}/${month}/${year}`;
 };
 
-// Inicializar con semana actual
+// Inicializar con semana actual (domingo a sábado)
 onMounted(() => {
   if (!props.modelValue.start || !props.modelValue.end) {
     const today = new Date();
-    const dayOfWeek = today.getDay();
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Lunes
+    const dayOfWeek = today.getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
     
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() + diff);
+    // Calcular domingo de esta semana usando fecha local (no UTC)
+    const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - dayOfWeek);
     
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6); // Domingo
+    // Calcular sábado (6 días después del domingo)
+    const endOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - dayOfWeek + 6);
     
-    startDate.value = startOfWeek.toISOString().split('T')[0];
-    endDate.value = endOfWeek.toISOString().split('T')[0];
+    // Formatear sin toISOString() para evitar conversión a UTC
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    startDate.value = formatDate(startOfWeek);
+    endDate.value = formatDate(endOfWeek);
   } else {
     startDate.value = props.modelValue.start;
     endDate.value = props.modelValue.end;

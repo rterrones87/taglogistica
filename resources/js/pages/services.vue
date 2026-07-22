@@ -126,12 +126,18 @@
                       @click.prevent="openSubstateHistoryModal(row)"
                   />
                   <TableAction
-                      v-if="hasPermission('services.change_substate') && row.state_id >= 2 && row.operator_id == getUserId()"
+                      v-if="hasPermission('services.change_substate') && row.state_id >= 2 && row.is_assigned_operator"
                       title="Ver gastos"
                       icon="cost.png"
                       @click.prevent="openExpensesModal(row)"
                   />
-                  <statebutton v-if="hasPermission('services.change_substate') && row.state_id > 1 && row.cost?.waybill != null" :stateId="row.substate_id" :serviceId="row.id" :typeOperation="row.type_operation == 1? 'impo' : 'expo'"/>
+                  <statebutton
+                    v-if="hasPermission('services.change_substate') && row.state_id > 1"
+                    :stateId="row.substate_id"
+                    :serviceId="row.id"
+                    :approvalsMap="row.approvals_map"
+                    :waybill="row.cost?.waybill"
+                  />
                   <TableAction
                       v-if="hasPermission('services.request_booth') && row.state_id >= 3 && row.state_id < 5"
                       title="Solicitar caseta extra"
@@ -157,7 +163,7 @@
                       :route="`service/${row.id}`"
                   />
                   <TableAction
-                      v-if="hasPermission('services.edit') && row.state_id == 1"
+                      v-if="canEditService(row)"
                       title="Editar"
                       icon="edit.png"
                       :route="`service/${row.id}`"
@@ -169,7 +175,7 @@
                       @click.prevent="openModal(row.id)"
                     />
                   <TableAction
-                      v-if="hasPermission('services.request_diesel') && row.state_id >= 3 && row.state_id < 5"
+                      v-if="hasPermission('services.request_diesel') && row.state_id < 5"
                       title="Solicitar mas diesel"
                       icon="diesel.png"
                       @click.prevent="openDieselModal(row)"
@@ -191,11 +197,12 @@
         </DataTable>
     </div>
 
-  <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-4 rounded-md w-full max-w-lg">
-      <h3 class="text-xl font-bold mb-4">Reasignar servicio</h3>
-
-      <div class="form-item">
+  <BaseModal
+    :show="showModal"
+    title="Reasignar servicio"
+    @close="showModal = false"
+  >
+    <div class="form-item">
         <label>Operador:</label>
         <remoteselect
             v-model="modalForm.operator_id"
@@ -219,42 +226,90 @@
         <span class="mx-1">Se pagara?</span>
       </label>
 
-      <div class="flex justify-end gap-2 mt-4">
+    <template #footer>
+      <div class="flex justify-end gap-2">
         <button @click="showModal = false" class="form-button bg-[#6e7881]">Cancelar</button>
         <button @click="confirmReassign" class="form-button">Aceptar</button>
       </div>
-    </div>
-  </div>
+    </template>
+  </BaseModal>
 
-  <div v-if="showDieselModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-4 rounded-md w-full max-w-lg">
-      <h3 class="text-xl font-bold mb-4">Solicitar diesel extra</h3>
-
-      <template v-if="approved(currentService.approvals_map, 'extra_diesel')">
-        <div class="form-item">
-          <label>Diesel Requerido:</label>
-          <input v-model="modalDieselForm.amount" type="number" min="0" required />
+  <BaseModal
+    :show="showDieselModal"
+    title="Solicitar diesel extra"
+    size="2xl"
+    @close="showDieselModal = false"
+  >
+    <div class="flex gap-4 min-h-[200px]">
+      <!-- Columna izquierda: historial (30%) -->
+      <div class="w-[30%] border-r pr-4 flex flex-col">
+        <h3 class="font-semibold text-sm mb-3 text-gray-700">Solicitudes anteriores</h3>
+        <div v-if="dieselHistoryLoading" class="text-sm text-gray-400">Cargando...</div>
+        <div v-else-if="dieselHistory.length > 0" class="flex flex-col gap-2">
+          <div
+            v-for="item in dieselHistory"
+            :key="item.id"
+            class="flex justify-between items-center text-sm border-b pb-1"
+          >
+            <span class="font-medium">{{ item.amount }} L</span>
+            <span :class="dieselStatusClass(item.status)" class="text-xs font-semibold">
+              {{ dieselStatusLabel(item.status) }}
+            </span>
+          </div>
         </div>
-      </template>
-      <p v-else>
-        Ya tiene una solicitud de diesel extra pendiente para este viaje
-      </p>
+        <p v-else class="text-sm text-gray-400 italic">Sin solicitudes anteriores</p>
+      </div>
 
-      <div class="flex justify-end gap-2 mt-4">
-          <button @click="showDieselModal = false" class="form-button bg-[#6e7881]">
-            <span v-if="!approved(currentService.approvals_map, 'extra_diesel')" >Entendido</span>
-            <span v-else>Cancelar</span>
-          </button>
-          <button v-if="approved(currentService.approvals_map, 'extra_diesel')" @click="confirmRequestDiesel" class="form-button">Solicitar</button>
+      <!-- Columna derecha: formulario (70%) -->
+      <div class="w-[70%]">
+        <template v-if="!hasPendingDiesel">
+          <div class="form-item">
+            <label>Diesel Requerido:</label>
+            <input
+              type="number"
+              v-model="modalDieselForm.amount"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              required
+            />
+          </div>
+          <div class="form-item">
+            <label>Descripción:</label>
+            <textarea
+              v-model="modalDieselForm.description"
+              placeholder="Escriba la razón o justificación para solicitar diesel extra"
+              rows="3"
+              maxlength="255"
+              class="w-full p-2 border rounded"
+              required
+            ></textarea>
+            <small class="text-gray-500">{{ modalDieselForm.description.length }}/255 caracteres</small>
+          </div>
+        </template>
+        <p v-else class="text-sm text-gray-600 mt-2">
+          Ya tienes una solicitud de diesel extra pendiente, espera a que sea aprobada o rechazada.
+        </p>
       </div>
     </div>
-  </div>
 
-  <div v-if="showBoothModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-4 rounded-md w-full max-w-lg">
-      <h3 class="text-xl font-bold mb-4">Solicitar caseta extra</h3>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <button @click="showDieselModal = false" class="form-button bg-[#6e7881]">
+          <span v-if="hasPendingDiesel">Entendido</span>
+          <span v-else>Cancelar</span>
+        </button>
+        <button v-if="!hasPendingDiesel" @click="confirmRequestDiesel" class="form-button">Solicitar</button>
+      </div>
+    </template>
+  </BaseModal>
 
-      <template v-if="approved(currentService.approvals_map, 'extra_booth')">
+  <BaseModal
+    :show="showBoothModal"
+    title="Solicitar caseta extra"
+    @close="showBoothModal = false"
+  >
+    <template v-if="approved(currentService.approvals_map, 'extra_booth')">
         <div class="form-item">
           <label>Seleccione una caseta:</label>
           <select v-model="modalBoothForm.booth_id" required>
@@ -269,29 +324,22 @@
         Ya tiene una solicitud de caseta extra pendiente para este viaje
       </p>
 
-      <div class="flex justify-end gap-2 mt-4">
-          <button @click="showBoothModal = false" class="form-button bg-[#6e7881]">
-            <span v-if="!approved(currentService.approvals_map, 'extra_booth')" >Entendido</span>
-            <span v-else>Cancelar</span>
-          </button>
-          <button v-if="approved(currentService.approvals_map, 'extra_booth')" @click="confirmRequestBooth" class="form-button">Solicitar</button>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="showExpensesModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-4 rounded-md w-full max-w-lg">
-      <div class="flex items-center">
-        <h3 class="flex-grow text-xl font-bold mb-4">Gastos Autorizados - {{ expensesData.folio }}</h3>
-        <button 
-          @click="showExpensesModal = false" 
-          class="relative items-center rounded-full border border-[#18364a] text-[#18364a] w-6 h-6"
-        >
-          <span class="relative -top-1">x</span>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <button @click="showBoothModal = false" class="form-button bg-[#6e7881]">
+          <span v-if="!approved(currentService.approvals_map, 'extra_booth')" >Entendido</span>
+          <span v-else>Cancelar</span>
         </button>
+        <button v-if="approved(currentService.approvals_map, 'extra_booth')" @click="confirmRequestBooth" class="form-button">Solicitar</button>
       </div>
+    </template>
+  </BaseModal>
 
-      <div class="w-full max-h-[400px] overflow-y-auto">
+  <BaseModal
+    :show="showExpensesModal"
+    :title="`Gastos Autorizados - ${expensesData.folio}`"
+    @close="showExpensesModal = false"
+  >
         <table class="table mt-2 text-sm">
           <thead>
             <tr>
@@ -313,41 +361,35 @@
           </tbody>
         </table>
 
-        <p v-if="expensesData.expenses.length === 0" class="text-center py-4 text-gray-500">
-          No hay gastos registrados para este viaje
-        </p>
-      </div>
-    </div>
-  </div>
+    <p v-if="expensesData.expenses.length === 0" class="text-center py-4 text-gray-500">
+      No hay gastos registrados para este viaje
+    </p>
+  </BaseModal>
 
-  <div v-if="showCommissionModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-4 rounded-md w-full max-w-lg">
-      <div class="flex items-center">
-        <h3 class="flex-grow text-xl font-bold mb-4">Comisión</h3>
-        <button 
-          @click="showCommissionModal = false" 
-          class="relative items-center rounded-full border border-[#18364a] text-[#18364a] w-6 h-6"
-        >
-          <span class="relative -top-1">x</span>
-        </button>
-      </div>
-
-      <div class="w-full">
+  <BaseModal
+    :show="showCommissionModal"
+    title="Comisión"
+    @close="showCommissionModal = false"
+  >
         <div class="form-item">
           <label>Agregar un valor de comisión:</label>
-          <input v-model="commissionModalForm.commission" type="number" min="0" required />
+          <CurrencyInput
+            v-model="commissionModalForm.commission"
+            :min="0"
+            placeholder="0.00"
+            required
+          />
         </div>
-      </div>
 
-      <div class="flex justify-end gap-2 mt-4">
-          <button @click="showCommissionModal = false" class="form-button bg-[#6e7881]">
-            <span>Cancelar</span>
-          </button>
-          <button @click="saveCommission" class="form-button">Guardar</button>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <button @click="showCommissionModal = false" class="form-button bg-[#6e7881]">
+          <span>Cancelar</span>
+        </button>
+        <button @click="saveCommission" class="form-button">Guardar</button>
       </div>
-
-    </div>
-  </div>
+    </template>
+  </BaseModal>
   <clientslistmodal 
       :show="showClientsModal" 
       @close="closeClientsModal"
@@ -370,21 +412,12 @@
   />
 
   <!-- Modal de Historial de Subestados -->
-  <div v-if="showSubstateHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-4 rounded-md w-full max-w-2xl">
-      <div class="flex items-center">
-        <h3 class="flex-grow text-xl font-bold mb-4">
-          Historial de Subestados - {{ substateHistoryData.folio }}
-        </h3>
-        <button 
-          @click="showSubstateHistoryModal = false" 
-          class="relative items-center rounded-full border border-[#18364a] text-[#18364a] w-6 h-6"
-        >
-          <span class="relative -top-1">x</span>
-        </button>
-      </div>
-
-      <div class="w-full max-h-[400px] overflow-y-auto">
+  <BaseModal
+    :show="showSubstateHistoryModal"
+    :title="`Historial de Subestados - ${substateHistoryData.folio}`"
+    size="2xl"
+    @close="showSubstateHistoryModal = false"
+  >
         <table class="table mt-2 text-sm">
           <thead>
             <tr>
@@ -404,28 +437,19 @@
           </tbody>
         </table>
 
-        <p v-if="substateHistoryData.history.length === 0" class="text-center py-4 text-gray-500">
-          No hay historial de subestados para este viaje
-        </p>
-      </div>
-    </div>
-  </div>
+    <p v-if="substateHistoryData.history.length === 0" class="text-center py-4 text-gray-500">
+      No hay historial de subestados para este viaje
+    </p>
+  </BaseModal>
 
   <!-- Modal de Evidencias -->
-  <div v-if="showEvidencesModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-4 rounded-md w-full max-w-4xl">
-      <div class="flex items-center mb-4">
-        <h3 class="flex-grow text-xl font-bold">Evidencias - {{ currentService.folio }}</h3>
-        <button 
-          @click="showEvidencesModal = false" 
-          class="relative items-center rounded-full border border-[#18364a] text-[#18364a] w-6 h-6"
-        >
-          <span class="relative -top-1">x</span>
-        </button>
-      </div>
-
-      <!-- Grid de evidencias con scroll -->
-      <div class="w-full max-h-[500px] overflow-y-auto">
+  <BaseModal
+    :show="showEvidencesModal"
+    :title="`Evidencias - ${currentService.folio}`"
+    size="4xl"
+    @close="showEvidencesModal = false"
+  >
+    <!-- Grid de evidencias con scroll -->
         <div v-if="currentService.evidences && currentService.evidences.length > 0" 
              class="grid grid-cols-2 md:grid-cols-3 gap-4 p-2">
           <div 
@@ -441,13 +465,11 @@
             />
           </div>
         </div>
-        
-        <p v-else class="text-center py-8 text-gray-500">
-          No hay evidencias registradas para este viaje
-        </p>
-      </div>
-    </div>
-  </div>
+    
+    <p v-else class="text-center py-8 text-gray-500">
+      No hay evidencias registradas para este viaje
+    </p>
+  </BaseModal>
 
   <!-- Modal de Imagen Ampliada -->
   <div v-if="showImageModal" class="fixed inset-0 bg-black bg-opacity-90 flex justify-center items-center z-[60]" @click="showImageModal = false">
@@ -482,11 +504,13 @@ import GenericAction from '@/components/GenericAction.vue';
 import SegmentedControl from '@/components/SegmentedControl.vue';
 import WeekNavigator from '@/components/WeekNavigator.vue';
 import {approved} from "../plugins/approvals";
+import BaseModal from '../components/BaseModal.vue';
 import clientslistmodal from "../components/clientslistmodal.vue";
 import boothslistmodal from "../components/boothslistmodal.vue";
 import placeslistmodal from "../components/placeslistmodal.vue";
 import driverslistmodal from "../components/driverslistmodal.vue";
 import unitslistmodal from "../components/unitslistmodal.vue";
+import CurrencyInput from '@/components/CurrencyInput.vue';
 
 import axios from "axios";
 import { useRoute, useRouter } from 'vue-router';
@@ -497,6 +521,24 @@ const router = useRouter();
 
 // Composable de permisos
 const { hasPermission, hasAnyPermission } = usePermissions();
+
+// Regla de visibilidad del botón Editar:
+// - Estado 1 (Solicitado) o 2 (Programado): siempre editable
+// - Estado 3 (En Ruta): solo antes de Inicia Flete
+//   · Importación (1) y Carga Suelta (3): substate 1 (Cargar en Puerto)
+//   · Exportación (2): substate 10 (Vacío Cargado)
+const canEditService = (row) => {
+    if (!hasPermission('services.edit')) return false;
+    if (row.state_id <= 2) return true;
+    if (row.state_id !== 3) return false;
+    if (row.type_operation == 1 || row.type_operation == 3) {
+        return row.substate_id == 1;
+    }
+    if (row.type_operation == 2) {
+        return row.substate_id == 10;
+    }
+    return false;
+};
 
 const { items, deleteItem, loadItems, loadFilteredItems } = actionslist({
     endpoint: 'services',
@@ -517,13 +559,13 @@ onMounted(async () => {
     if (!dateRange.value.start || !dateRange.value.end) {
         const today = new Date();
         const dayOfWeek = today.getDay();
-        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Lunes
+        const diff = -dayOfWeek; // Domingo (día 0)
         
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() + diff);
         
         const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6); // Domingo
+        endOfWeek.setDate(startOfWeek.getDate() + 6); // Sábado
         
         dateRange.value = {
             start: startOfWeek.toISOString().split('T')[0],
@@ -777,9 +819,26 @@ const confirmReassign = async () => {
 
 const currentService = ref({});
 const showDieselModal = ref(false);
+const dieselHistory = ref([]);
+const dieselHistoryLoading = ref(false);
 const modalDieselForm = ref({
-  amount: 0
+  amount: 0,
+  description: ''
 });
+
+const hasPendingDiesel = computed(() =>
+  dieselHistory.value.some(d => d.status === 'pending')
+);
+
+const dieselStatusLabel = (status) => {
+  const map = { approved: 'Aprobada', rejected: 'Rechazada', pending: 'Pendiente' };
+  return map[status] ?? '—';
+};
+
+const dieselStatusClass = (status) => {
+  const map = { approved: 'text-green-600', rejected: 'text-red-500', pending: 'text-yellow-500' };
+  return map[status] ?? 'text-gray-400';
+};
 
 const showBoothModal = ref(false);
 const modalBoothForm = ref({
@@ -794,10 +853,21 @@ const expensesData = ref({
   folio: ''
 });
 
-const openDieselModal = (current) => {
-  currentService.value = current
+const openDieselModal = async (current) => {
+  currentService.value = current;
   selectedId.value = current.id;
+  dieselHistory.value = [];
   showDieselModal.value = true;
+
+  dieselHistoryLoading.value = true;
+  try {
+    const { data } = await axios.get(`services/${current.id}`);
+    dieselHistory.value = data.diesel_history ?? [];
+  } catch (error) {
+    console.error('Error cargando historial de diesel:', error);
+  } finally {
+    dieselHistoryLoading.value = false;
+  }
 };
 
 const confirmRequestDiesel = async () => {
@@ -805,14 +875,20 @@ const confirmRequestDiesel = async () => {
     return alert("El campo Diesel requerido es obligatorio");
   }
 
+  if (!modalDieselForm.value.description || modalDieselForm.value.description.trim() === '') {
+    return alert("El campo Descripción es obligatorio");
+  }
+
   try {
     await axios.post(`services/request_diesel/${selectedId.value}`, {
-      amount: modalDieselForm.value.amount
+      amount: modalDieselForm.value.amount,
+      description: modalDieselForm.value.description
     });
     showDieselModal.value = false;
-    modalDieselForm.value.amount = 0
-    dialogs.fire("Éxito", "Diesel extra solicitado con éxito.", "success");
-   // await loadItems();
+    modalDieselForm.value.amount = 0;
+    modalDieselForm.value.description = '';
+    await dialogs.fire("Éxito", "Diesel extra solicitado con éxito.", "success");
+    await handleReload();
   } catch (error) {
     console.error(error);
     alert("Error al solicitar el diesel extra");

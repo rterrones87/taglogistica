@@ -21,6 +21,7 @@ const suggestions = ref([]);
 let showDropdown = ref(false);
 const isSelecting = ref(false);
 const hasInteracted = ref(false);
+const isLoading = ref(false);
 
 // Función para obtener el texto a mostrar
 const getDisplayText = (item) => {
@@ -30,7 +31,25 @@ const getDisplayText = (item) => {
   return item[props.textKey] || '';
 };
 
+// Función para encontrar la mejor coincidencia
+const findBestMatch = (inputText) => {
+  if (!inputText || suggestions.value.length === 0) {
+    return null;
+  }
+  
+  const normalizedInput = inputText.toLowerCase().trim();
+  
+  return suggestions.value.find(item => {
+    const displayText = getDisplayText(item);
+    return displayText.toLowerCase().trim() === normalizedInput;
+  });
+};
+
 function onInput() {
+  hasInteracted.value = true;
+}
+
+function onPaste() {
   hasInteracted.value = true;
 }
 
@@ -58,6 +77,7 @@ watch(query, async (newQuery) => {
 
   if(newQuery.length >= 1)
   {
+    isLoading.value = true;
     try {
       const { data } = await axios.get(props.url, { params: { q: newQuery } });
       
@@ -71,6 +91,8 @@ watch(query, async (newQuery) => {
       showDropdown.value = true;
     } catch (error) {
       console.error('Error fetching suggestions:', error);
+    } finally {
+      isLoading.value = false;
     }
   }
 });
@@ -88,8 +110,34 @@ function selectSuggestion(item) {
 
 
 function closeDrop() {
-  setTimeout(() => { 
-    showDropdown.value = false 
+  setTimeout(async () => {
+    // Esperar a que termine la carga si está en progreso
+    if (isLoading.value) {
+      // Esperar hasta que isLoading sea false
+      await new Promise(resolve => {
+        const checkLoading = setInterval(() => {
+          if (!isLoading.value) {
+            clearInterval(checkLoading);
+            resolve();
+          }
+        }, 50);
+      });
+    }
+    
+    // Si hay texto, intentar encontrar una coincidencia
+    if (query.value && query.value.trim()) {
+      const match = findBestMatch(query.value);
+      
+      if (match) {
+        // Se encontró coincidencia, seleccionarla
+        selectSuggestion(match);
+      } else {
+        // No se encontró coincidencia, limpiar el campo
+        query.value = '';
+      }
+    }
+    
+    showDropdown.value = false;
     hasInteracted.value = false;
   }, 200);
 }
@@ -109,6 +157,7 @@ const selectedText = computed(() => {
       @focus="showDropdown = !!suggestions.length"
       @blur="() => closeDrop()"
       @input="() => onInput()"
+      @paste="() => onPaste()"
       class="border rounded py-[5px] px-2 w-full"
       placeholder="Buscar..."
       :disabled="disabled"

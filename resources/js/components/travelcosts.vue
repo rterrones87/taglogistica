@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, computed  } from 'vue';
 import TableAction from '@/components/TableAction.vue';
+import CurrencyInput from '@/components/CurrencyInput.vue';
 
 const props = defineProps({
   rows: { type: Array, default: () => [] },
@@ -17,7 +18,7 @@ const totalCost = computed(() => {
   return localRows.value.reduce((sum, row) => {
     const cost = parseFloat(row.cost);
     return sum + (isNaN(cost) ? 0 : cost);
-  }, 0) + props.booth_costs;
+  }, 0) + parseFloat(props.booth_costs || 0);
 });
 
 // ✅ Solo una vez al iniciar, sincroniza props -> local
@@ -41,7 +42,7 @@ watch(
 );
 
 function addRow() {
-  localRows.value.push({ concept: '', cost: 0 });
+  localRows.value.push({ concept: '', cost: 0.00 });
 }
 
 function removeRow(index) {
@@ -75,9 +76,11 @@ function removeRow(index) {
           </td>
           <td>
             <div class="form-item">
-              <input 
-                :disabled="!visible"
+              <CurrencyInput
                 v-model="row.cost"
+                :min="0"
+                :disabled="!visible"
+                placeholder="0.00"
               />
             </div>
           </td>

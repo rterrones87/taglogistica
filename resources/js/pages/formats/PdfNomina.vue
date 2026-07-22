@@ -52,7 +52,7 @@
 			<tr v-for="payment in data.payments" :key="payment.id">
 				<td width="120px"></td>
 				<td colspan="2" class="bottom-line">
-					{{ payment.service.delivery_date.substring(0, 10) }} // {{ getAllDestine(payment.service) }}  // {{ payment.service.cost.waybill }}
+					{{ payment.service.delivery_date.substring(0, 10) }} // {{ getAllDestine(payment.service) }} // {{ payment.service.cost.waybill }} // {{ payment.operator_type?.name ?? 'N/A' }}
 				</td>
 				<td class="bottom-line">${{payment.total}}</td>
 			</tr>

@@ -77,31 +77,23 @@
     </div>
 
     <!-- Modal de Nuevo Rol -->
-    <div v-if="showNewRoleModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div class="bg-white p-4 rounded-md w-full max-w-lg">
-            <div class="flex items-center">
-                <h3 class="flex-grow text-xl font-bold mb-4">Nuevo Rol</h3>
-                <button 
-                    @click="closeNewRoleModal" 
-                    class="relative items-center rounded-full border border-[#18364a] text-[#18364a] w-6 h-6"
-                >
-                    <span class="relative -top-1">x</span>
-                </button>
-            </div>
-            
-            <div class="w-full">
+    <BaseModal
+        :show="showNewRoleModal"
+        title="Nuevo Rol"
+        @close="closeNewRoleModal"
+    >
                 <div class="form-item">
                     <label>Nombre del rol:</label>
                     <input v-model="newRoleForm.name" type="text" required placeholder="Ingrese el nombre del rol" />
                 </div>
-            </div>
-            
-            <div class="flex justify-end gap-2 mt-4">
+
+        <template #footer>
+            <div class="flex justify-end gap-2">
                 <button @click="closeNewRoleModal" class="form-button bg-[#6e7881]">Cancelar</button>
                 <button @click="saveNewRole" class="form-button">Guardar</button>
             </div>
-        </div>
-    </div>
+        </template>
+    </BaseModal>
 </template>
 
 <script setup>
@@ -109,6 +101,7 @@ import { ref, computed, onMounted, inject } from 'vue';
 import axios from 'axios';
 import breadcrumb from '../components/breadcrumb.vue';
 import GenericAction from '../components/GenericAction.vue';
+import BaseModal from '../components/BaseModal.vue';
 
 const dialogs = inject("swal");
 
@@ -266,7 +259,8 @@ const formatModuleName = (module) => {
         'approvals': 'Aprobaciones',
         'diesel_costs': 'Costos Diesel',
         'dashboard': 'Dashboard',
-        'roles': 'Roles'
+        'roles': 'Roles',
+        'client_places': 'Control de rutas'
     };
     return translations[module] || module;
 };

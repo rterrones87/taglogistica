@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, computed, watch } from 'vue';
+import { inject, ref, computed, watch, onMounted } from 'vue';
 import CameraCapture from './CameraCapture.vue';
 import BaseModal from './BaseModal.vue';
 import axios from 'axios';
@@ -8,21 +8,39 @@ const dialogs = inject("swal");
 
 // Props
 const props = defineProps({
-  stateId: {
-    type: Number,
-    required: true,
-  },
-  serviceId: {
-    type: Number,
-    required: true,
-  },
-  typeOperation: {
-    type: String,
-    required: true,
-  },
+  stateId:      { type: Number,  required: true },
+  serviceId:    { type: Number,  required: true },
+  approvalsMap: { type: Object,  default: () => ({}) },
+  waybill:      { type: String,  default: null },
+  // typeOperation eliminado — los substates se cargan dinámicamente desde la API
 });
 
-const showCameraModal =ref(false);
+// IDs de "Inicia Flete" (impo/suelta=2, expo=11)
+const INICIA_FLETE_IDS = [2, 11];
+
+// Bloqueado cuando el siguiente substate es "Inicia Flete" y no se cumplen condiciones
+const isBlockedForFlete = computed(() => {
+  if (!nextState.value) return false;
+  if (!INICIA_FLETE_IDS.includes(nextState.value.id)) return false;
+
+  const expensesApproved = props.approvalsMap?.initial_expenses === 'approved';
+  const hasWaybill       = !!props.waybill;
+
+  return !expensesApproved || !hasWaybill;
+});
+
+// Mensaje explicativo del bloqueo
+const blockedMessage = computed(() => {
+  if (!isBlockedForFlete.value) return null;
+  const expensesApproved = props.approvalsMap?.initial_expenses === 'approved';
+  const hasWaybill       = !!props.waybill;
+
+  if (!expensesApproved && !hasWaybill) return 'Requiere gastos aprobados y carta porte';
+  if (!expensesApproved) return 'Requiere gastos iniciales aprobados';
+  return 'Requiere carta porte asignada';
+});
+
+const showCameraModal = ref(false);
 
 // Emit
 const emit = defineEmits(['updated']);
@@ -35,38 +53,18 @@ watch(() => props.stateId, (newVal) => {
   currentStateId.value = newVal;
 });
 
-// Estados por tipo de operación
-const states = {
-  impo: [
-    { id: 0, name: '' },
-    { id: 1, name: 'Cargar en Puerto' },
-    { id: 2, name: 'Inicia flete' },
-    { id: 3, name: 'Llegada a Cliente' },
-    { id: 4, name: 'Inicio descarga' },
-    { id: 5, name: 'Termino descarga' },
-    { id: 6, name: 'Salida de Cliente' },
-    { id: 7, name: 'Llegada a patio TAG' },
-    { id: 8, name: 'Entrega de vacio' },
-  ],
-  expo: [
-    { id:  0, name: '' },
-    { id:  9, name: 'Recolección de Vacío' },
-    { id: 10, name: 'Vacío Cargado' },
-    { id: 11, name: 'Inicia Flete' },
-    { id: 12, name: 'Llegada a Cliente' },
-    { id: 13, name: 'Inicia Carga' },
-    { id: 14, name: 'Finaliza Carga' },
-    { id: 15, name: 'Salida de Cliente' },
-    { id: 16, name: 'Llegada a Patio TAG' },
-    { id: 17, name: 'Inicia Ingreso de Carga' },
-    { id: 18, name: 'Ingreso de Carga Concluido' },
-  ],
+// Lista de subestados cargada desde la API
+const stateList = ref([]);
+
+const loadSubstates = async () => {
+  if (!props.serviceId) return;
+  const { data } = await axios.get(`substates/for-service/${props.serviceId}`);
+  // Insertar substate 0 al inicio si no viene en la lista
+  const hasCero = data.some(s => s.id === 0);
+  stateList.value = hasCero ? data : [{ id: 0, name: '' }, ...data];
 };
 
-// Lista de estados según typeOperation
-const stateList = computed(() => {
-  return states[props.typeOperation] || [];
-});
+onMounted(loadSubstates);
 
 // Calcula el índice actual y el siguiente estado si existe
 const currentIndex = computed(() =>
@@ -81,29 +79,27 @@ const nextState = computed(() => {
 
 async function applyState() {
   dialogs.fire({
-        title: "Procesando...",
-        text: "Por favor, espere",
-        allowOutsideClick: false,
-        didOpen: () => dialogs.showLoading()
-    });
+    title: "Procesando...",
+    text: "Por favor, espere",
+    allowOutsideClick: false,
+    didOpen: () => dialogs.showLoading()
+  });
 
-    const response = await axios.post('services/change_substate', {
-      substate_id: nextState.value.id,
-      service_id: props.serviceId
-    });
+  const response = await axios.post('services/change_substate', {
+    substate_id: nextState.value.id,
+    service_id: props.serviceId
+  });
 
-    // Si la petición fue exitosa, actualiza el estado
-    currentStateId.value = nextState.value.id;
+  currentStateId.value = nextState.value.id;
+  emit('updated', currentStateId.value);
 
-    // Emite un evento para el padre si necesita saberlo
-    emit('updated', currentStateId.value);
+  dialogs.close();
+  dialogs.fire("Excelente!", "El cambio de estado se ha aplicado.", "success");
 
-    dialogs.close();
-    dialogs.fire("Excelente!", "El cambio de estado se ha aplicado.", "success");
-
-    if( currentStateId.value == 7 ||  currentStateId.value == 9) {
-      location.reload()
-    }
+  // Recargar si hubo pase de estafeta (el operador ya no verá el servicio)
+  if (response.data?.operator_changed) {
+    location.reload();
+  }
 }
 
 // Acción al dar click
@@ -161,12 +157,14 @@ const handlerOnUpload = async () => {
 <template>
   <button
     @click="changeState"
-    :disabled="!nextState"
+    :disabled="!nextState || isBlockedForFlete"
+    :title="blockedMessage || ''"
     class="bg-[#234053] hover:bg-[#18364a] text-white px-4 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed"
   >
     <span v-if="nextState" class="whitespace-nowrap">
       <small class="block text-[14px] opacity-70">Cambiar a</small>
       <small class="block text-[12px]">{{ nextState.name }}</small>
+      <small v-if="isBlockedForFlete" class="block text-[10px] text-red-300">{{ blockedMessage }}</small>
     </span>
     <span v-else class="whitespace-nowrap">
       <small class="block text-[14px]">Terminado</small>

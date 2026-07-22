@@ -65,12 +65,13 @@
                 <h3 class="text-xl my-4 font-bold text-center md:text-left">Contenedores</h3>
         
                 <div class="grid grid-cols-1 gap-2">
-                    <clientcontainers 
+                <clientcontainers 
                         v-model:rows="item.containers" 
                         :client_id="item.client_id" 
                         :errors="errors"
-                        :disabled="!canEditServiceFields"
-                        :disabledContainerNumber="!canEditContainers"
+                        :disabled="!canEditContainerData"
+                        :disabledContainerNumber="!canEditContainerData"
+                        :canAddDelete="canAddDeleteContainers"
                     />
                     <p v-if="errors.containers" class="text-red-500 text-sm mt-2">{{ errors.containers[0] }}</p>
                 </div>
@@ -114,48 +115,38 @@
         redirectOnCreate: 'services'
     });
 
-    // Computed property para determinar si se pueden editar los contenedores (número de contenedor)
-    const canEditContainers = computed(() => {
-        // Si no tiene permiso de edición, no puede editar
+    // Puede editar datos de contenedores: estados 1, 2 y 3 (En Espera, Programado, En Ruta)
+    const canEditContainerData = computed(() => {
         if (!hasPermission('services.edit')) return false;
-        
-        // Si es nuevo registro, puede editar
         if (!isEditing.value) return true;
-        
-        // Si está en estado "En Espera" (state_id = 1), puede editar todo
-        if (item.value.state_id == 1) return true;
-        
-        // Excepción especial para exportaciones (type_operation == 2):
-        // Pueden editar el número de contenedor en estados 2 (Programado) y 3 (En Ruta)
-        if (item.value.type_operation == 2) {
-            // En estado "Programado" (state_id = 2), puede editar número de contenedor
-            if (item.value.state_id == 2) {
-                return true;
-            }
-            
-            // En estado "En Ruta" (state_id = 3), puede editar SOLO si substate_id <= 9
-            if (item.value.state_id == 3 && 
-                item.value.substate_id != null &&
-                item.value.substate_id > 0 && 
-                item.value.substate_id <= 9) {
-                return true;
-            }
-        }
-        
-        return false;
+        return item.value.state_id <= 3;
+    });
+
+    // Puede agregar o eliminar contenedores: solo en estado 1 (En Espera)
+    const canAddDeleteContainers = computed(() => {
+        if (!hasPermission('services.edit')) return false;
+        if (!isEditing.value) return true;
+        return item.value.state_id == 1;
     });
 
     // Computed property para determinar si se pueden editar los campos generales del servicio
     // (cliente, tipo operación, terminal, fechas, tipo unidad, IMO)
+    // Habilitado en estados 1 y 2, y en estado 3 antes de Inicia Flete:
+    //   · Importación (1) y Carga Suelta (3): substate 1 (Cargar en Puerto)
+    //   · Exportación (2): substate 10 (Vacío Cargado)
     const canEditServiceFields = computed(() => {
-        // Si no tiene permiso de edición, no puede editar
         if (!hasPermission('services.edit')) return false;
-        
-        // Si es nuevo registro, puede editar
         if (!isEditing.value) return true;
-        
-        // Solo puede editar campos generales si está en estado "En Espera"
-        return item.value.state_id == 1;
+        if (item.value.state_id <= 2) return true;
+        if (item.value.state_id === 3) {
+            if (item.value.type_operation == 1 || item.value.type_operation == 3) {
+                return item.value.substate_id == 1;
+            }
+            if (item.value.type_operation == 2) {
+                return item.value.substate_id == 10;
+            }
+        }
+        return false;
     });
 
     // Definir los elementos del breadcrumb

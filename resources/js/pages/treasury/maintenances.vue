@@ -7,8 +7,8 @@
             <ExcelExport
                 class="w-full md:w-auto md:mx-1"
                 endpoint="download/treasury/maintenances"
-                :fields="['id', 'folio', 'user', 'order_date', 'supplier', 'total', 'description', 'payment_date']"
-                :headers="['ID', 'Folio', 'Usuario/Solicita', 'Fecha/Orden', 'Proveedor', 'Total', 'Descripción', 'Fecha de Pago']"
+                :fields="['id', 'folio', 'unit', 'user', 'approver', 'order_date', 'supplier', 'concepts', 'total', 'description', 'payment_date']"
+                :headers="['ID', 'Folio', 'Unidad', 'Usuario/Solicita', 'Usuario/Aprueba', 'Fecha/Orden', 'Proveedor', 'Conceptos', 'Total', 'Descripción', 'Fecha de Pago']"
                 fileName="mantenimientos_tesoreria.xlsx"
                 buttonLabel="Descargar"
                 :filters="getCurrentFilters()"
@@ -74,11 +74,80 @@
                         icon="cost.png"
                         @click.prevent="applyPayment(row.id)"
                     />
+                    <TableAction
+                        title="Detalles"
+                        icon="info.png"
+                        @click.prevent="showDetails(row.id)"
+                    />
                 </div>
             </template>
         </DataTable>
 
 	</div>
+
+	<BaseModal
+		:show="showInfoModal"
+		title="Detalles del Mantenimiento"
+		height="95%"
+		@close="closeModal"
+	>
+		<ul class="my-2">
+			<li 
+				v-for="d in details" 
+				:key="d.id"
+				class="flex items-center gap-2"
+			>
+				<b class="w-[140px] me-4">{{ d.title }}</b>
+				<span class="flex-grow">{{ d.description }}</span>
+			</li>
+		</ul>
+		<hr/>
+
+		<div v-if="supplierRequests.length > 0" class="my-1">
+			<b class="text-gray-500 py-1 block">Solicitud a Proveedor</b>
+			<hr/>
+			<table class="table mt-2 text-sm">
+				<thead>
+					<tr>
+						<th>Concepto</th>
+						<th>Cantidad</th>
+						<th>Costo</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="item in supplierRequests" :key="item.id">
+						<td><b>{{ item.description }}</b></td>
+						<td class="text-center">{{ item.quantity || '-' }}</td>
+						<td class="text-end">${{ Number(item.cost).toFixed(2) }}</td>
+					</tr>
+					<tr>
+						<td><b>TOTAL</b></td>
+						<td></td>
+						<td class="text-end">${{ totalSupplierRequests.toFixed(2) }}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div v-if="inventoryRequests.length > 0" class="mt-2">
+			<b class="text-gray-500 py-1 block">Solicitud a Inventario</b>
+			<hr/>
+			<table class="table mt-2 text-sm">
+				<thead>
+					<tr>
+						<th>Producto</th>
+						<th>Cantidad</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="inv in inventoryRequests" :key="inv.id">
+						<td><b>{{ inv.inventory.name }}</b></td>
+						<td class="text-end">{{ inv.quantity }}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</BaseModal>
 </template>
 
 <script setup>
@@ -88,10 +157,11 @@
 	import { actionslist } from '../../composables/actionslist';
 	import DataTable from '@/components/DataTable.vue';
 	import TableAction from '@/components/TableAction.vue';
-	import SegmentedControl from '@/components/SegmentedControl.vue';
-	import WeekNavigator from '@/components/WeekNavigator.vue';
-	import ExcelExport from '../../components/ExcelExport.vue';
-	import axios from 'axios';
+import SegmentedControl from '@/components/SegmentedControl.vue';
+import WeekNavigator from '@/components/WeekNavigator.vue';
+import ExcelExport from '../../components/ExcelExport.vue';
+import BaseModal from '../../components/BaseModal.vue';
+import axios from 'axios';
 
 	const dialogs = inject("swal");
 	const route = useRoute();
@@ -107,18 +177,18 @@
 	    { title: 'Mantenimientos' } // Último elemento sin path porque es la página actual
 	];
 
-	onMounted(async () => {
+onMounted(async () => {
 	    // Inicializar dateRange con semana actual si no tiene valores
 	    if (!dateRange.value.start || !dateRange.value.end) {
 	        const today = new Date();
 	        const dayOfWeek = today.getDay();
-	        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Lunes
+	        const diff = -dayOfWeek; // Domingo (día 0)
 	        
 	        const startOfWeek = new Date(today);
 	        startOfWeek.setDate(today.getDate() + diff);
 	        
 	        const endOfWeek = new Date(startOfWeek);
-	        endOfWeek.setDate(startOfWeek.getDate() + 6); // Domingo
+	        endOfWeek.setDate(startOfWeek.getDate() + 6); // Sábado
 	        
 	        dateRange.value = {
 	            start: startOfWeek.toISOString().split('T')[0],
@@ -160,6 +230,15 @@
 	    }
 	    await loadFilteredItems(filters);
 	};
+
+	const showInfoModal = ref(false);
+	const details = ref([]);
+	const supplierRequests = ref([]);
+	const inventoryRequests = ref([]);
+
+	const totalSupplierRequests = computed(() => {
+		return supplierRequests.value.reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
+	});
 
 	const types = ref([
 	  { id: '1', label: 'Preventivo', icon : 'preventive.png'  },
@@ -249,6 +328,52 @@ const dateFilterEnabled = ref(true);
 		
 	}
 
+	const showDetails = async (id) => {
+		try {
+			dialogs.fire({
+				title: "Procesando...",
+				text: "Por favor, espere",
+				allowOutsideClick: false,
+				didOpen: () => dialogs.showLoading()
+			});
+
+			const {data} = await axios.get(`treasury/maintenances/details/${id}`);
+
+			// Llenar detalles generales
+			details.value = [
+				{id: 1, title: "Folio:", description: data.maintenance.folio},
+				{id: 2, title: "Unidad:", description: data.maintenance.unit},
+				{id: 3, title: "Tipo de Mantto:", description: data.maintenance.type_maintenance},
+				{id: 4, title: "Kms:", description: data.maintenance.kms},
+				{id: 5, title: "Descripción:", description: data.maintenance.description},
+				{id: 6, title: "Proveedor:", description: data.treasury_order.supplier_name || 'N/A'},
+				{id: 7, title: "Factura:", description: data.treasury_order.invoice_required ? 'Sí' : 'No'},
+				{id: 8, title: "Total:", description: '$' + Number(data.treasury_order.total).toFixed(2)}
+			];
+
+			// Llenar solicitudes del proveedor
+			supplierRequests.value = data.supplier_requests || [];
+
+			// Llenar solicitudes de inventario
+			inventoryRequests.value = data.inventory_requests || [];
+
+			dialogs.close();
+			showInfoModal.value = true;
+
+		} catch (error) {
+			dialogs.close();
+			console.error("Error obteniendo detalles:", error);
+			dialogs.fire("Lo sentimos!", "Ocurrio un error inesperado, intente de nuevo.", "error");
+		}
+	}
+
+	const closeModal = () => {
+		showInfoModal.value = false;
+		details.value = [];
+		supplierRequests.value = [];
+		inventoryRequests.value = [];
+	}
+
 	const filterData = (i) => {
 		currentType.value = i;
 	    router.push({
@@ -267,24 +392,36 @@ const dateFilterEnabled = ref(true);
 	        sortable: true, 
 	        filterable: true 
 	    },
-	    { 
-	        key: 'folio', 
-	        label: 'Folio', 
-	        sortable: true, 
-	        filterable: true 
-	    },
-	    { 
-	        key: 'user', 
-	        label: 'Usuario/Solicita', 
-	        sortable: true, 
-	        filterable: true 
-	    },
-	    { 
-	        key: 'order_date', 
-	        label: 'Fecha/Orden', 
-	        sortable: true, 
-	        filterable: true 
-	    },
+	{ 
+	    key: 'folio', 
+	    label: 'Folio', 
+	    sortable: true, 
+	    filterable: true 
+	},
+	{ 
+	    key: 'unit', 
+	    label: 'Unidad', 
+	    sortable: true, 
+	    filterable: true 
+	},
+{ 
+    key: 'user', 
+    label: 'Usuario/Solicita', 
+    sortable: true, 
+    filterable: true 
+},
+{ 
+    key: 'approver', 
+    label: 'Usuario/Aprueba', 
+    sortable: true, 
+    filterable: true 
+},
+    { 
+        key: 'order_date', 
+        label: 'Fecha/Orden', 
+        sortable: true, 
+        filterable: true 
+    },
 	    { 
 	        key: 'supplier', 
 	        label: 'Proveedor', 
@@ -313,30 +450,42 @@ const dateFilterEnabled = ref(true);
 	        sortable: true, 
 	        filterable: true 
 	    },
-	    { 
-	        key: 'folio', 
-	        label: 'Folio', 
-	        sortable: true, 
-	        filterable: true 
-	    },
-	    { 
-	        key: 'user', 
-	        label: 'Usuario/Solicita', 
-	        sortable: true, 
-	        filterable: true 
-	    },
-	    { 
-	        key: 'order_date', 
-	        label: 'Fecha/Orden', 
-	        sortable: true, 
-	        filterable: true 
-	    },
-	    { 
-	        key: 'supplier', 
-	        label: 'Proveedor', 
-	        sortable: true, 
-	        filterable: true
-	    },
+	{ 
+	    key: 'folio', 
+	    label: 'Folio', 
+	    sortable: true, 
+	    filterable: true 
+	},
+	{ 
+	    key: 'unit', 
+	    label: 'Unidad', 
+	    sortable: true, 
+	    filterable: true 
+	},
+{ 
+    key: 'user', 
+    label: 'Usuario/Solicita', 
+    sortable: true, 
+    filterable: true 
+},
+{ 
+    key: 'approver', 
+    label: 'Usuario/Aprueba', 
+    sortable: true, 
+    filterable: true 
+},
+    { 
+        key: 'order_date', 
+        label: 'Fecha/Orden', 
+        sortable: true, 
+        filterable: true 
+    },
+    { 
+        key: 'supplier', 
+        label: 'Proveedor', 
+        sortable: true, 
+        filterable: true
+    },
 	    { 
 	        key: 'total', 
 	        label: 'Total', 

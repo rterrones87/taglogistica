@@ -46,6 +46,10 @@ const props = defineProps({
   id: {
     type: Number,
     required: true,
+  },
+  endpoint: {
+    type: String,
+    default: 'treasury/upload-photos'
   }
 });
 
@@ -54,13 +58,76 @@ const camera = ref(null);
 const showCamera = ref(true);
 const photos = ref([]);
 
+// Comprimir imagen usando Canvas API
+const compressImage = async (blob, maxWidth = 1920, maxHeight = 1080, quality = 0.8) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    
+    img.onload = () => {
+      // Calcular nuevas dimensiones manteniendo aspect ratio
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width = width * ratio;
+        height = height * ratio;
+      }
+      
+      // Crear canvas y comprimir
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Convertir a blob comprimido
+      canvas.toBlob(
+        (compressedBlob) => {
+          URL.revokeObjectURL(url);
+          if (compressedBlob) {
+            resolve(compressedBlob);
+          } else {
+            reject(new Error('Error al comprimir imagen'));
+          }
+        },
+        'image/jpeg',
+        quality
+      );
+    };
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Error al cargar imagen'));
+    };
+    
+    img.src = url;
+  });
+};
+
 // Tomar una foto
 const takePhoto = async () => {
-  const blob = await camera.value?.snapshot(); 
-  photos.value.push({
-    url: URL.createObjectURL(blob),
-    blob: blob,
-  });
+  try {
+    // Usar las dimensiones reales del stream para evitar distorsión
+    const videoEl = camera.value?.video;
+    const blob = await camera.value?.snapshot({
+      width: videoEl?.videoWidth || 1920,
+      height: videoEl?.videoHeight || 1080,
+    });
+    
+    // Comprimir la imagen antes de agregarla
+    const compressedBlob = await compressImage(blob);
+    
+    photos.value.push({
+      url: URL.createObjectURL(compressedBlob),
+      blob: compressedBlob,
+    });
+  } catch (error) {
+    console.error('Error al procesar la foto:', error);
+    dialogs.fire("Error", "No se pudo procesar la foto. Intente de nuevo.", "error");
+  }
 };
 
 
@@ -87,7 +154,7 @@ const uploadPhotos = async () => {
         didOpen: () => dialogs.showLoading()
     });
 
-    const res = await axios.post(`treasury/upload-photos/${props.id}`, formData, {
+    const res = await axios.post(`${props.endpoint}/${props.id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     
@@ -102,7 +169,16 @@ const uploadPhotos = async () => {
 
   } catch (err) {
     console.error(err);
-    dialogs.fire("Lo sentimos!", "Ocurrio un errors inesperado, intente de nuevo.", "error");
+    dialogs.close();
+    
+    let errorMsg = "Ocurrió un error inesperado, intente de nuevo.";
+    if (err.response?.data?.message) {
+      errorMsg = err.response.data.message;
+    } else if (err.response?.status === 422) {
+      errorMsg = "Las imágenes no cumplen con los requisitos del servidor.";
+    }
+    
+    dialogs.fire("Lo sentimos!", errorMsg, "error");
   }
 };
 </script>

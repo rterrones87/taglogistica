@@ -54,22 +54,20 @@
 
 	</div>
 
-	<div v-if="showInfoModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-	    <div class="bg-white h-screen px-4 pb-4 rounded-md w-full max-w-lg overflow-y-auto">
-	      <div class="flex items-center bg-white z-10 sticky left-0 top-0">
-	      	<h3 class="text-xl font-bold">Detalles de gastos</h3>
-	      	<button 
-	      		@click="() => { showInfoModal = false; payments.value = []; discounts.value = []; }" 
-	      		class="boder-0 outline-0 ml-auto p-2 m-2 font-bold text-[#18364a]">Cerrar</button>
-	  	  </div>
-
-	  	  <div class="max-w-full overflow-x-auto">
+	<BaseModal
+		:show="showInfoModal"
+		title="Detalles de gastos"
+		height="95%"
+		@close="() => { showInfoModal = false; payments.value = []; discounts.value = []; }"
+	>
+		<div class="max-w-full overflow-x-auto">
 		  	  <table v-if="payments" class="table">
 		      	<caption class="text-left font-bold">Viajes</caption>
 		      	<thead>
 		      		<tr>
 		      			<th>Folio</th>
 	                    <th>Tipo de operación</th>
+	                    <th>Tipo de operador</th>
 	                    <th>Cliente</th>
 	                    <th>Destinos</th>
 	                    <th>Pago</th>
@@ -79,6 +77,7 @@
 		      		<tr v-for="item in payments" :key="item.id">
 		      			<td>{{ item.folio }}</td>
 	                    <td>{{ getOperationTypeTitle(item.type_operation) }}</td>
+	                    <td>{{ item.operator_role }}</td>
 	                    <td>{{ item.client }}</td>
 	                    <td>{{ getAllDestine(item) }}</td>
 	                    <td>${{item.amount}}</td>
@@ -110,22 +109,14 @@
 	      		</tr>
 	      	</tbody>
 	      </table>
+	</BaseModal>
 
-	    </div>
-	  </div>
-
-	<div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white h-screen p-4 rounded-md w-full max-w-lg">
-      <div class="flex items-center">
-          <h3 class="flex-grow text-xl font-bold mb-4">Detalles</h3>
-          <button 
-            @click="showModal = false" 
-            class="relative items-center rounded-full border border-[#18364a] text-[#18364a] w-6 h-6"
-          >
-              <span class="relative -top-1">x</span>
-          </button>
-      </div>
-      <div class="w-full max-h-[300px] overflow-y-auto">
+	<BaseModal
+		:show="showModal"
+		title="Detalles"
+		height="95%"
+		@close="showModal = false"
+	>
         <ul>
           <li 
             v-for="d in details" :key="d.id"
@@ -135,11 +126,7 @@
             <span class="flex-grow">{{d.description}}</span>
           </li>
         </ul>
-
-      </div>
-      
-    </div>
-  </div>
+	</BaseModal>
 
 
 </template>
@@ -151,9 +138,10 @@
 	import { actionslist } from '../../composables/actionslist';
 	import DataTable from '@/components/DataTable.vue';
 	import TableAction from '@/components/TableAction.vue';
-	import SegmentedControl from '@/components/SegmentedControl.vue';
+import SegmentedControl from '@/components/SegmentedControl.vue';
 	import PdfGenerator from '@/components/PdfGenerator.vue';
 	import PdfNomina from '@/pages/formats/PdfNomina.vue';
+	import BaseModal from '../../components/BaseModal.vue';
 	import axios from 'axios';
 	
 	const pdfGen = ref(null)
@@ -335,7 +323,7 @@
 
 	        costs.value = {
 	           destinations: data.cost.formatted_destinations,
-	           initials: data.cost.formatted_booth_costs,
+	           initials: data.cost.formatted_initial_costs,
 	           extras: data.cost.formatted_extras_costs
 	        };
 	       

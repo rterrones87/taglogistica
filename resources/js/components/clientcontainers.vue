@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { usePermissions } from '../composables/usePermissions';
 import autocompleteinput from './autocompleteinput.vue';
 import suggestioninput from './suggestioninput.vue';
@@ -8,7 +8,11 @@ import TableAction from '@/components/TableAction.vue';
 
 const props = defineProps({
   rows: { type: Array, default: () => [] },
-  client_id: { type: Number, required: true }
+  client_id: { type: Number, required: true },
+  errors: { type: Object, default: () => ({}) },
+  disabled: { type: Boolean, default: false },
+  disabledContainerNumber: { type: Boolean, default: false },
+  canAddDelete: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['update:rows']);
@@ -46,8 +50,26 @@ function removeRow(index) {
 // Composable de permisos
 const { hasPermission, hasAnyPermission } = usePermissions();
 
-// Helper para verificar si puede editar
-const canEdit = hasAnyPermission(['services.create', 'services.edit']);
+// Helper para verificar si puede editar campos de datos (orden, tipo, destino, dirección)
+const canEdit = computed(() => {
+  return hasAnyPermission(['services.create', 'services.edit']) && !props.disabled;
+});
+
+// Helper para agregar o eliminar filas (solo cuando canAddDelete es true)
+const canAddDeleteRows = computed(() => {
+  return hasAnyPermission(['services.create', 'services.edit']) && props.canAddDelete;
+});
+
+// Helper específico para el campo de número de contenedor
+const canEditContainerNumber = computed(() => {
+  return hasAnyPermission(['services.create', 'services.edit']) && !props.disabledContainerNumber;
+});
+
+// Función para obtener error de un campo específico del contenedor
+const getContainerError = (index, field) => {
+  const errorKey = `containers.${index}.${field}`;
+  return props.errors[errorKey] ? props.errors[errorKey][0] : null;
+};
 </script>
 
 <template>
@@ -59,7 +81,7 @@ const canEdit = hasAnyPermission(['services.create', 'services.edit']);
         <th>Tipo de unidad</th>
         <th>Destino</th>
         <th>Dirección</th>
-        <th v-if="canEdit"></th>
+        <th v-if="canAddDeleteRows"></th>
       </tr>
     </thead>
     <tbody>
@@ -69,22 +91,40 @@ const canEdit = hasAnyPermission(['services.create', 'services.edit']);
         <td>
           <div class="form-item">
             <input :disabled="!canEdit" v-model="row.order_number"/>
+            <p v-if="getContainerError(index, 'order_number')" class="text-red-500 text-sm">
+              {{ getContainerError(index, 'order_number') }}
+            </p>
           </div>
         </td>
         <td>
-          <autocompleteinput :disabled="!canEdit" v-model="row.container_number" url="catalog/container-numbers"/>
-        </td> 
-        <td>
-          <autocompleteinput :disabled="!canEdit" v-model="row.container_type" url="catalog/containers"/>
+          <div class="form-item">
+            <autocompleteinput :disabled="!canEditContainerNumber" v-model="row.container_number" url="catalog/container-numbers"/>
+            <p v-if="getContainerError(index, 'container_number')" class="text-red-500 text-sm">
+              {{ getContainerError(index, 'container_number') }}
+            </p>
+          </div>
         </td>
         <td>
-          <suggestioninput
-            :disabled="!canEdit"
-            v-model="row.place_id"
-            :url="`places`"
-            valueKey="id"
-            textKey="name"
-            :textValue="row.place.name || ''" />
+          <div class="form-item">
+            <autocompleteinput :disabled="!canEdit" v-model="row.container_type" url="catalog/containers"/>
+            <p v-if="getContainerError(index, 'container_type')" class="text-red-500 text-sm">
+              {{ getContainerError(index, 'container_type') }}
+            </p>
+          </div>
+        </td>
+        <td>
+          <div class="form-item">
+            <suggestioninput
+              :disabled="!canEdit"
+              v-model="row.place_id"
+              :url="`places`"
+              valueKey="id"
+              textKey="name"
+              :textValue="row.place.name || ''" />
+            <p v-if="getContainerError(index, 'place_id')" class="text-red-500 text-sm">
+              {{ getContainerError(index, 'place_id') }}
+            </p>
+          </div>
            <!-- <remoteselect
               v-model="row.place_id"
               :endpoint="`places/detinations/${client_id}`"
@@ -95,9 +135,12 @@ const canEdit = hasAnyPermission(['services.create', 'services.edit']);
         <td>
           <div class="form-item">
             <input :disabled="!canEdit" v-model="row.address" placeholder="Dirección"/>
+            <p v-if="getContainerError(index, 'address')" class="text-red-500 text-sm">
+              {{ getContainerError(index, 'address') }}
+            </p>
           </div>
         </td>
-        <td v-if="canEdit">
+        <td v-if="canAddDeleteRows">
           <div class="flex justify-center flex-col md:flex-row">
                 <TableAction
                     title="Eliminar"
@@ -112,11 +155,10 @@ const canEdit = hasAnyPermission(['services.create', 'services.edit']);
       </tr>
     </tbody>
   </table>
-
   <div class="flex justify-end">
     <a 
-      v-if="canEdit" 
-      href="#" 
+      v-if="canAddDeleteRows" 
+      href="#"
       @click.prevent="addRow" 
       class="my-2 py-2 px-3 flex items-center hover:opacity-80 border-2 border-white/15 rounded font-semibold shadow-sm text-white bg-dynamic-color">
       + Agregar contenedor

@@ -208,7 +208,7 @@ const rawMenuItems = [
   { 
     icon: "settings", 
     name: "Sistema",
-    requiresAnyPermission: ['users.view', 'clients.view', 'suppliers.view', 'units.view', 'places.view', 'booths.view', 'diesel_costs.view', 'roles.view'],
+    requiresAnyPermission: ['users.view', 'clients.view', 'suppliers.view', 'units.view', 'places.view', 'booths.view', 'diesel_costs.view', 'roles.view', 'client_places.view'],
     subMenu: [
         { 
             name: "Usuarios", 
@@ -249,6 +249,11 @@ const rawMenuItems = [
             name: "Roles", 
             path: "/panel/roles",
             requiresPermission: 'roles.view'
+        },
+        {
+            name: "Control de rutas",
+            path: "/panel/client-places",
+            requiresPermission: 'client_places.view'
         }
     ] 
   }

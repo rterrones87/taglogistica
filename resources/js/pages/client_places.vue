@@ -29,6 +29,12 @@
                     icon="edit.png"
                     @click="openBoothsListModal"
                 />
+                <GenericAction
+                    v-if="hasPermission('operators.view')"
+                    title="Tarifas Op."
+                    icon="cost.png"
+                    @click="showRatesModal = true"
+                />
             </div>
         </div>
 
@@ -69,6 +75,12 @@
             </template>
         </DataTable>
     </div>
+
+    <!-- Modal de Tarifas por Tipo de Operador -->
+    <OperatorTypeRatesModal
+        :show="showRatesModal"
+        @close="showRatesModal = false"
+    />
 
     <!-- Modal de Creación -->
     <BaseModal
@@ -355,6 +367,7 @@ import UnitTypeSelect from '../components/UnitTypeSelect.vue';
 import clientslistmodal from '../components/clientslistmodal.vue';
 import placeslistmodal from '../components/placeslistmodal.vue';
 import boothslistmodal from '../components/boothslistmodal.vue';
+import OperatorTypeRatesModal from '../components/OperatorTypeRatesModal.vue';
 
 const dialogs = inject('swal');
 const { hasPermission } = usePermissions();
@@ -371,9 +384,9 @@ onMounted(() => {
 
 // ─── Modales de catálogos ─────────────────────────────────────────────────────
 const showClientsListModal = ref(false);
-const showPlacesListModal = ref(false);
-
-const showBoothsListModal = ref(false);
+const showPlacesListModal  = ref(false);
+const showBoothsListModal  = ref(false);
+const showRatesModal       = ref(false);
 
 const openClientsListModal = () => { showClientsListModal.value = true; };
 const openPlacesListModal = () => { showPlacesListModal.value = true; };

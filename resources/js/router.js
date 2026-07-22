@@ -45,6 +45,7 @@ import OperatorPayment from './pages/forms/operator_payment.vue';
 import Nominas from './pages/nominas.vue';
 import DieselCosts from './pages/diesel_costs.vue';
 import DieselCost from './pages/forms/diesel_cost.vue';
+import ClientPlaces from './pages/client_places.vue';
 
 import Dashboard from './pages/dashboards/dashboard.vue';
 import DashboardServices from './pages/dashboards/dashboard_services.vue';
@@ -153,6 +154,7 @@ const routes = [
             { path: 'dashboard/maintenances-details', component: DashboardMaintenancesDetails, meta: {requiresAuth: true} },
             { path: 'diesel_costs', component: DieselCosts, meta : { requiresPermission: 'diesel_costs.view' } },
             { path: 'diesel_cost', component: DieselCost, meta : { requiresPermission: ['diesel_costs.view', 'diesel_costs.create', 'diesel_costs.edit'] } },
+            { path: 'client-places', component: ClientPlaces, meta: { requiresPermission: 'client_places.view' } },
         ]
     },
 ];

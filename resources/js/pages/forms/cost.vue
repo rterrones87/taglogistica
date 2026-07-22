@@ -1,5 +1,9 @@
 <template>
     <breadcrumb :items="breadcrumbItems"/>
+    
+    <!-- ServiceCard - Información del viaje -->
+    <ServiceCard v-if="item.service_id" :serviceId="item.service_id" />
+    
     <div class="m-4 bg-white p-4 rounded shadow-md">
 
         <h2 class="text-3xl my-4 font-bold text-center md:text-left">Gastos</h2>
@@ -10,13 +14,18 @@
                 
                 <div class="form-item">
                     <label>Carta porte:</label>
-                    <input v-model="item.waybill" type="text" required :disabled="item.service?.state_id < 2"/>
+                    <input v-model="item.waybill" type="text" required/>
                     <p v-if="errors.waybill" class="text-red-500 text-sm">{{ errors.waybill[0] }}</p>
                 </div>
 
                 <div class="form-item">
                     <label>Precio del viaje:</label>
-                    <input v-model="item.travel_cost" type="number" min="1" :disabled="item.service?.state_id !== 1 || !approved(item.service?.approvals_map, 'initial_expenses')" required />
+                    <CurrencyInput
+                        v-model="item.travel_cost"
+                        :min="1"
+                        :disabled="(item.service?.state_id !== 1 && item.service?.state_id !== 2) || !approved(item.service?.approvals_map, 'initial_expenses')"
+                        required
+                    />
                     <p v-if="errors.travel_cost" class="text-red-500 text-sm">{{ errors.travel_cost[0] }}</p>
                 </div>
                 
@@ -26,7 +35,7 @@
             <div class="grid grid-cols-1 gap-2">
                 <destinocasetas 
                     @OnAggregate="handleAggregate"
-                    :visible="item.service?.state_id === 1 && approved(item.service?.approvals_map, 'initial_expenses')"
+                    :visible="(item.service?.state_id === 1 || item.service?.state_id === 2) && approved(item.service?.approvals_map, 'initial_expenses')"
                     v-model:rows="item.formatted_destinations"
                 />
             </div>
@@ -35,8 +44,8 @@
 
             <div class="grid grid-cols-1 gap-2">
                 <travelcosts 
-                    :visible="item.service?.state_id === 1 && approved(item.service?.approvals_map, 'initial_expenses')"
-                    v-model:rows="item.formatted_booth_costs" 
+                    :visible="(item.service?.state_id === 1 || item.service?.state_id === 2) && approved(item.service?.approvals_map, 'initial_expenses')"
+                    v-model:rows="item.formatted_initial_costs" 
                     :booth_costs="item.booth_costs"/>
             </div>
             
@@ -57,6 +66,8 @@
     import travelcosts from '../../components/travelcosts.vue';
     import destinocasetas from '../../components/destinocasetas.vue';
     import FormAction from '@/components/FormAction.vue';
+    import CurrencyInput from '@/components/CurrencyInput.vue';
+    import ServiceCard from '@/components/ServiceCard.vue';
     import {approved} from "../../plugins/approvals";
     
     const dialogs = inject("swal");
@@ -64,11 +75,9 @@
 
     const { item, isEditing, errors, saveItem } = upsert({
         endpoint: 'costs',
-        data: {service_id:0, waybill:'', booth_costs:0, travel_cost: 0, formatted_booth_costs: [],  formatted_destinations: []},
+        data: {service_id:0, waybill:'', booth_costs:0, travel_cost: 0, formatted_initial_costs: [],  formatted_destinations: []},
         dialogs,
-        onCreatedListener: () => {
-            location.reload()
-        }
+        redirectOnCreate: 'services'
     });
 
     // Definir los elementos del breadcrumb

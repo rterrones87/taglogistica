@@ -21,7 +21,7 @@
                     <label>Unidad:</label>
                     <suggestioninput
                         v-model="item.unit_id"
-                        url="units"
+                        url="units/maintenance"
                         valueKey="id"
                         textKey="econame"
                         :textValue="item.unit?.econame || ''"

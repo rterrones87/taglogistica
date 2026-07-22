@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, nextTick  } from 'vue';
 import TableAction from '@/components/TableAction.vue';
+import CurrencyInput from '@/components/CurrencyInput.vue';
 import axios from 'axios';
 
 const props = defineProps({
@@ -65,10 +66,12 @@ function removeRow(index) {
           </td> 
           <td>
             <div class="form-item">
-              <input 
-                v-model="row.amount" 
+              <CurrencyInput
+                v-model="row.amount"
+                :min="0"
+                placeholder="0.00"
                 :disabled="!row.discount"
-                />
+              />
             </div>
           </td>
           

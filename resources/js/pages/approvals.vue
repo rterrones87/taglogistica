@@ -42,7 +42,7 @@
                     v-if="approval.kind != 'tire_expenses'"
                     class="text-xs rounded border border-[#18364a] px-4 py-1 my-1 text-[#18364a]" 
                     type="button"
-                    @click="getApprovalDetails(approval.kind, approval.scope_id)"
+                    @click="getApprovalDetails(approval.kind, approval.scope_id, approval.approvable_id)"
                   >
                     Detalles
                   </button>
@@ -77,18 +77,12 @@
     <p class="text-center block py-8" v-else>No hay autorizaciones disponibles.</p>
   </div>
 
-  <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white min-h-screen p-4 rounded-md w-full max-w-lg">
-      <div class="flex items-center">
-          <h3 class="flex-grow text-xl font-bold mb-4">Detalles</h3>
-          <button 
-            @click="showModal = false" 
-            class="relative items-center rounded-full border border-[#18364a] text-[#18364a] w-6 h-6"
-          >
-              <span class="relative -top-1">x</span>
-          </button>
-      </div>
-      <div class="w-full overflow-y-auto">
+  <BaseModal
+    :show="showModal"
+    title="Detalles"
+    height="95%"
+    @close="showModal = false"
+  >
         <ul>
           <li 
             v-for="d in details" :key="d.id"
@@ -229,10 +223,7 @@
         </div>
         
 
-      </div>
-      
-    </div>
-  </div>
+  </BaseModal>
 
 </template>
 
@@ -244,6 +235,7 @@ import breadcrumb from '../components/breadcrumb.vue';
 import { useRouter } from 'vue-router';
 import TableAction from '@/components/TableAction.vue';
 import SegmentedControl from '@/components/SegmentedControl.vue';
+import BaseModal from '../components/BaseModal.vue';
 
 const router = useRouter();
 const dialogs = inject("swal");
@@ -419,7 +411,7 @@ const rejectItem = async (id) => {
 };
 
 
-const getApprovalDetails = async (kind, scope_id) => {
+const getApprovalDetails = async (kind, scope_id, approvable_id) => {
   
 
   try {
@@ -462,7 +454,7 @@ const getApprovalDetails = async (kind, scope_id) => {
     }
     else
     {
-        var {data} = await axios.get(`services/${scope_id}`);
+        var {data} = await axios.get(`services/${approvable_id}`);
 
         dialogs.close();
 
@@ -472,7 +464,7 @@ const getApprovalDetails = async (kind, scope_id) => {
         if(kind == 'initial_expenses') {
           costs.value = {
             destinations: data.cost.formatted_destinations,
-            initials: data.cost.formatted_booth_costs
+            initials: data.cost.formatted_initial_costs
           };
         }
 
@@ -482,13 +474,20 @@ const getApprovalDetails = async (kind, scope_id) => {
           };
         }
 
+        // Obtener operador y unidad principales desde service_operators (snake_case)
+        // Para servicios legacy=1 también funciona porque show() normaliza la relación
+        const mainSO = (data.service_operators || []).find(so => so.type?.is_main == 1 || so.type?.is_main === true);
+        const operadorNombre = mainSO?.operator?.name || data.operator?.name || 'Sin asignar';
+        const unidadNombre   = mainSO?.unit?.econame  || data.unit?.econame  || 'Sin asignar';
+
         details.value = [];
         details.value = [
           {id:1, title:"Folio: ", description:data.folio},
-          {id:2, title:"Cliente: ", description:data.client.name},
-          {id:3, title:"Destino(s): ", description:getAllDestine(data)},
-          {id:4, title:"Operador: ", description:data.operator?.name || 'Sin asignar'},
-          {id:5, title:"Unidad: ", description:data.unit?.econame || 'Sin asignar'}
+          {id:2, title:"Carta porte: ", description:data.cost?.waybill || 'Sin asignar'},
+          {id:3, title:"Cliente: ", description:data.client.name},
+          {id:4, title:"Destino(s): ", description:getAllDestine(data)},
+          {id:5, title:"Operador: ", description:operadorNombre},
+          {id:6, title:"Unidad: ", description:unidadNombre}
         ];
 
         if(kind == 'initial_expenses') {

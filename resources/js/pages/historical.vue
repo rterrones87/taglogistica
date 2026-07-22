@@ -79,11 +79,12 @@
         </table>
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-4 rounded-md w-full max-w-lg">
-      <h3 class="text-xl font-bold mb-4">Reasignar servicio</h3>
-
-      <div class="form-item">
+  <BaseModal
+    :show="showModal"
+    title="Reasignar servicio"
+    @close="showModal = false"
+  >
+    <div class="form-item">
         <label>Operador:</label>
         <!--
         <suggestioninput
@@ -116,12 +117,13 @@
         <span class="mx-1">Se pagara?</span>
       </label>
 
-      <div class="flex justify-end gap-2 mt-4">
+    <template #footer>
+      <div class="flex justify-end gap-2">
         <button @click="showModal = false" class="form-button bg-[#6e7881]">Cancelar</button>
         <button @click="confirmReassign" class="form-button">Aceptar</button>
       </div>
-    </div>
-  </div>
+    </template>
+  </BaseModal>
 
 </template>
 
@@ -133,6 +135,7 @@ import breadcrumb from '../components/breadcrumb.vue';
 import suggestioninput from '../components/suggestioninput.vue';
 import remoteselect from '../components/remoteselect.vue';
 import SegmentedControl from '@/components/SegmentedControl.vue';
+import BaseModal from '../components/BaseModal.vue';
 import axios from "axios";
 
 const dialogs = inject("swal");

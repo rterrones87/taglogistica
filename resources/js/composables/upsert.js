@@ -2,6 +2,17 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 
+/**
+ * Genera un UUID v4 para idempotencia
+ */
+const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+};
+
 export function upsert(config) {
     const route = useRoute();
     const router = useRouter();
@@ -26,6 +37,7 @@ export function upsert(config) {
     const item = ref(initialData);
     const isEditing = ref(false);
     const errors = ref({});
+    let idempotencyKey = generateUUID(); // Generar UUID al inicializar
     const dialogs = config.dialogs;
 
     const loadItem = async (id) => {
@@ -73,7 +85,15 @@ export function upsert(config) {
                     config.onCreatedListener();
                 }
             } else {
-                await axios.post(`${config.endpoint}`, item.value);
+                await axios.post(`${config.endpoint}`, item.value, {
+                    headers: {
+                        'Idempotency-Key': idempotencyKey
+                    }
+                });
+                
+                // Regenerar UUID para el siguiente request (si el usuario crea otro)
+                idempotencyKey = generateUUID();
+                
                 dialogs.close();
                 dialogs.fire("Excelente!", "El registro ha sido creado correctamente.", "success").then(() => {
 
@@ -92,8 +112,8 @@ export function upsert(config) {
             }
         } catch (error) {
             dialogs.close();
-            if (error.response && error.response.status === 400) {
-                errors.value = error.response.data;
+            if (error.response && (error.response.status === 400 || error.response.status === 422)) {
+                errors.value = error.response.data.errors || error.response.data;
             } else {
                 console.error("Error guardando el recurso:", error);
             }

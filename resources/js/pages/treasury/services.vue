@@ -7,8 +7,8 @@
             <ExcelExport
                 class="w-full md:w-auto md:mx-1"
                 endpoint="download/treasury/services"
-                :fields="['id', 'folio', 'user', 'order_date', 'operator', 'total', 'payment_date']"
-                :headers="['ID', 'Folio/Viaje', 'Usuario/Solicita', 'Fecha/Orden', 'Operador', 'Total', 'Fecha de Pago']"
+                :fields="['id', 'folio', 'user', 'approver', 'order_date', 'operator', 'total', 'payment_date']"
+                :headers="['ID', 'Folio/Viaje', 'Usuario/Solicita', 'Usuario/Aprueba', 'Fecha/Orden', 'Operador', 'Total', 'Fecha de Pago']"
                 fileName="viajes_tesoreria.xlsx"
                 buttonLabel="Descargar"
                 :filters="getCurrentFilters()"
@@ -80,16 +80,13 @@
 
 	</div>
 
-	<div v-if="showInfoModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-	    <div class="bg-white h-screen px-4 pb-4 rounded-md w-full max-w-lg overflow-y-auto">
-	      <div class="flex items-center bg-white z-10 sticky left-0 top-0">
-	      	<h3 class="text-xl font-bold">Detalles de gastos</h3>
-	      	<button 
-	      		@click="() => { showInfoModal = false; expenses.value = []; costs.value = []; }" 
-	      		class="boder-0 outline-0 ml-auto p-2 m-2 font-bold text-[#18364a]">Cerrar</button>
-	  	  </div>
-
-	  	  <ul class="my-2">
+	<BaseModal
+		:show="showInfoModal"
+		title="Detalles de gastos"
+		height="95%"
+		@close="() => { showInfoModal = false; expenses.value = []; costs.value = []; }"
+	>
+		<ul class="my-2">
 			<li 
 			class="flex items-center gap-2"
 			>
@@ -140,10 +137,7 @@
 	      		</tr>
 	      	</tbody>
 	      </table>
-
-	     
-	    </div>
-	  </div>
+	</BaseModal>
 </template>
 
 <script setup>
@@ -153,9 +147,10 @@
 	import { actionslist } from '../../composables/actionslist';
 	import DataTable from '@/components/DataTable.vue';
 	import TableAction from '@/components/TableAction.vue';
-	import SegmentedControl from '@/components/SegmentedControl.vue';
+import SegmentedControl from '@/components/SegmentedControl.vue';
 	import WeekNavigator from '@/components/WeekNavigator.vue';
 	import ExcelExport from '../../components/ExcelExport.vue';
+	import BaseModal from '../../components/BaseModal.vue';
 	import axios from 'axios';
 	
 	const dialogs = inject("swal");
@@ -172,18 +167,18 @@
 	    { title: 'Viajes' } // Último elemento sin path porque es la página actual
 	];
 
-	onMounted(async () => {
+onMounted(async () => {
 	    // Inicializar dateRange con semana actual si no tiene valores
 	    if (!dateRange.value.start || !dateRange.value.end) {
 	        const today = new Date();
 	        const dayOfWeek = today.getDay();
-	        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Lunes
+	        const diff = -dayOfWeek; // Domingo (día 0)
 	        
 	        const startOfWeek = new Date(today);
 	        startOfWeek.setDate(today.getDate() + diff);
 	        
 	        const endOfWeek = new Date(startOfWeek);
-	        endOfWeek.setDate(startOfWeek.getDate() + 6); // Domingo
+	        endOfWeek.setDate(startOfWeek.getDate() + 6); // Sábado
 	        
 	        dateRange.value = {
 	            start: startOfWeek.toISOString().split('T')[0],
@@ -370,18 +365,24 @@ const dateFilterEnabled = ref(true);
 	        sortable: true, 
 	        filterable: true 
 	    },
-	    { 
-	        key: 'user', 
-	        label: 'Usuario/Solicita', 
-	        sortable: true, 
-	        filterable: true 
-	    },
-	    { 
-	        key: 'order_date', 
-	        label: 'Fecha/Orden', 
-	        sortable: true, 
-	        filterable: true 
-	    },
+    { 
+        key: 'user', 
+        label: 'Usuario/Solicita', 
+        sortable: true, 
+        filterable: true 
+    },
+    { 
+        key: 'approver', 
+        label: 'Usuario/Aprueba', 
+        sortable: true, 
+        filterable: true 
+    },
+    { 
+        key: 'order_date', 
+        label: 'Fecha/Orden', 
+        sortable: true, 
+        filterable: true 
+    },
     { 
         key: 'operator', 
         label: 'Operador', 
@@ -410,18 +411,24 @@ const dateFilterEnabled = ref(true);
 	        sortable: true, 
 	        filterable: true 
 	    },
-	    { 
-	        key: 'user', 
-	        label: 'Usuario/Solicita', 
-	        sortable: true, 
-	        filterable: true 
-	    },
-	    { 
-	        key: 'order_date', 
-	        label: 'Fecha/Orden', 
-	        sortable: true, 
-	        filterable: true 
-	    },
+    { 
+        key: 'user', 
+        label: 'Usuario/Solicita', 
+        sortable: true, 
+        filterable: true 
+    },
+    { 
+        key: 'approver', 
+        label: 'Usuario/Aprueba', 
+        sortable: true, 
+        filterable: true 
+    },
+    { 
+        key: 'order_date', 
+        label: 'Fecha/Orden', 
+        sortable: true, 
+        filterable: true 
+    },
     { 
         key: 'operator', 
         label: 'Operador', 
