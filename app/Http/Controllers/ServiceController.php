@@ -963,7 +963,7 @@ class ServiceController extends Controller
             scopeId: $service->id
         );
 
-        dd($approvalId);
+        // dd($approvalId);
 
 
         $approvalService->approve(
