@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\TreasuryService;
 use App\Models\Service;
 use App\Helpers\NotificationHelper;
+use App\Services\ApprovalService;
 
 class ExtrasController extends Controller
 {
@@ -55,7 +56,7 @@ class ExtrasController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, ApprovalService $approvalService, $id)
     {
         $validator = Validator::make($request->all(), [
             'service_id' => 'required'
@@ -87,7 +88,7 @@ class ExtrasController extends Controller
 
         $service = Service::find($data["service_id"]);
 
-        $service->requestApproval(
+        $approvalId = $service->requestApproval(
             kind: 'extra_expenses',
             userId: auth()->id(),
             snapshot: $service->snapshotForExtraExpenses(),
@@ -97,10 +98,16 @@ class ExtrasController extends Controller
             scopeId: $service->id
         );
 
-        NotificationHelper::notifyAdmins(
-            'Nueva solitud de Gastos extras',
-            'Se requiere de su aprobación ('. $service->folio .')'
+        $approvalService->approve(
+            $approvalId,
+            auth()->id(),
+            'Aprobación automática de gastos extras'
         );
+
+        // NotificationHelper::notifyAdmins(
+        //     'Nueva solitud de Gastos extras',
+        //     'Se requiere de su aprobación ('. $service->folio .')'
+        // );
     
         return response()->json(null, 200);
     }

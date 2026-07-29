@@ -883,7 +883,7 @@ class ServiceController extends Controller
     }
 
 
-    public function request_diesel(Request $request, $id)
+    public function request_diesel(Request $request, ApprovalService $approvalService , $id)
     {
         $validated = $request->validate([
             'amount' => 'required|numeric|decimal:0,2|min:0',
@@ -909,7 +909,7 @@ class ServiceController extends Controller
         $diesel->service_id = $id;
         $diesel->save();
 
-        $service->requestApproval(
+        $approvalId = $service->requestApproval(
             kind: 'extra_diesel',
             userId: auth()->id(),
             snapshot: $service->snapshotForExtraDiesel($validated['amount'], $validated['description']),
@@ -917,10 +917,17 @@ class ServiceController extends Controller
             scopeId: $diesel->id
         );
 
-        NotificationHelper::notifyAdmins(
-            'Nueva solitud de Diesel extra',
-            'Se requiere de su aprobación ('. $service->folio .')'
+
+        $approvalService->approve(
+            $approvalId,
+            auth()->id(),
+            'Aprobación automática de diesel'
         );
+
+        // NotificationHelper::notifyAdmins(
+        //     'Nueva solitud de Diesel extra',
+        //     'Se requiere de su aprobación ('. $service->folio .')'
+        // );
 
         return response()->json([
             'message' => 'Diesel registrado correctamente',
