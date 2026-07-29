@@ -28,8 +28,7 @@ use App\Models\ServiceOperator;
 use App\Models\ServiceOperatorType;
 use App\Models\ServiceOperatorTypeSubstate;
 use App\Models\ServiceOperatorTypeRate;
-
-
+use App\Services\ApprovalService;
 
 class ServiceController extends Controller
 {
@@ -929,7 +928,7 @@ class ServiceController extends Controller
         ], 201);
     }
 
-    public function request_booth(Request $request, $id)
+    public function request_booth(Request $request, ApprovalService $approvalService, $id)
     {
         $validated = $request->validate([
             'booth_id' => 'required|exists:booths,id',
@@ -952,7 +951,7 @@ class ServiceController extends Controller
 
         $service = Service::find($id);
 
-        $service->requestApproval(
+        $approvalId =  $service->requestApproval(
             kind: 'extra_booth',
             userId: auth()->id(),
             snapshot: $service->snapshotForExtraBooth($booth),
@@ -964,10 +963,19 @@ class ServiceController extends Controller
             scopeId: $service->id
         );
 
-        NotificationHelper::notifyAdmins(
-            'Nueva solitud de Caseta extra',
-            'Se requiere de su aprobación ('. $service->folio .')'
+        dd($approvalId);
+
+
+        $approvalService->approve(
+            $approvalId,
+            auth()->id(),
+            'Aprobación automática de caseta extra'
         );
+
+        // NotificationHelper::notifyAdmins(
+        //     'Nueva solitud de Caseta extra',
+        //     'Se requiere de su aprobación ('. $service->folio .')'
+        // );
 
         return response()->json([
             'message' => 'Caseta extra registrada correctamente',
