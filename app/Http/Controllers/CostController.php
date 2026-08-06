@@ -12,6 +12,7 @@ use App\Models\ClientPlace;
 use Illuminate\Support\Facades\DB;
 use App\Models\TreasuryService;
 use App\Helpers\NotificationHelper;
+use App\Services\ApprovalService;
 
 class CostController extends Controller
 {
@@ -148,7 +149,7 @@ class CostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request,  ApprovalService $approvalService , $id)
     {
         $data = $request->all();
         
@@ -265,7 +266,7 @@ class CostController extends Controller
             if (!$service->hasApprovalPendingOrApproved('initial_expenses')) {
                 $requestedBy = $service->initial_expenses_filled_by ?? auth()->id();
 
-                $service->requestApproval(
+                $approvalId = $service->requestApproval(
                     kind: 'initial_expenses',
                     userId: $requestedBy,
                     snapshot: $service->snapshotForInitialExpenses($total),
@@ -273,9 +274,15 @@ class CostController extends Controller
                     scopeId: $service->id
                 );
 
-                NotificationHelper::notifyAdmins(
-                    'Nueva solicitud de Gastos iniciales',
-                    'Se requiere de su aprobación ('. $service->folio .')'
+                // NotificationHelper::notifyAdmins(
+                //     'Nueva solicitud de Gastos iniciales',
+                //     'Se requiere de su aprobación ('. $service->folio .')'
+                // );
+
+                $approvalService->approve(
+                    $approvalId,
+                    auth()->id(),
+                    'Aprobación automática de diesel'
                 );
             }
         }
