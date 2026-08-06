@@ -279,7 +279,7 @@ class ServiceController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(ServiceRequest $request, $id)
+    public function update(ServiceRequest $request, ApprovalService $approvalService , $id)
     {
         $user = Auth::user();
 
@@ -382,7 +382,7 @@ class ServiceController extends Controller
                                 'description'         => 'Diesel auxiliar: ' . $type->name,
                             ]);
 
-                            $service->requestApproval(
+                            $approvalId = $service->requestApproval(
                                 kind:     'extra_diesel',
                                 userId:   auth()->id(),
                                 snapshot: $service->snapshotForExtraDiesel(
@@ -393,10 +393,16 @@ class ServiceController extends Controller
                                 scopeId:  $auxDiesel->id,
                             );
 
-                            NotificationHelper::notifyAdmins(
-                                'Nueva solicitud de Diesel Extra',
-                                'Operador auxiliar ' . $type->name . ': ' . $operator->name . ' (' . $service->folio . ')'
+                            $approvalService->approve(
+                                $approvalId,
+                                auth()->id(),
+                                'Aprobación automática de diesel'
                             );
+
+                            // NotificationHelper::notifyAdmins(
+                            //     'Nueva solicitud de Diesel Extra',
+                            //     'Operador auxiliar ' . $type->name . ': ' . $operator->name . ' (' . $service->folio . ')'
+                            // );
                         }
                     }
                 }
