@@ -393,11 +393,11 @@ class ServiceController extends Controller
                                 scopeId:  $auxDiesel->id,
                             );
 
-                            $approvalService->approve(
-                                $approvalId,
-                                auth()->id(),
-                                'Aprobación automática de diesel'
-                            );
+                            // $approvalService->approve(
+                            //     $approvalId,
+                            //     auth()->id(),
+                            //     'Aprobación automática de diesel'
+                            // );
 
                             // NotificationHelper::notifyAdmins(
                             //     'Nueva solicitud de Diesel Extra',

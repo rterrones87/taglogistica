@@ -279,11 +279,11 @@ class CostController extends Controller
                 //     'Se requiere de su aprobación ('. $service->folio .')'
                 // );
 
-                $approvalService->approve(
-                    $approvalId,
-                    auth()->id(),
-                    'Aprobación automática de diesel'
-                );
+                // $approvalService->approve(
+                //     $approvalId,
+                //     auth()->id(),
+                //     'Aprobación automática de diesel'
+                // );
             }
         }
 
