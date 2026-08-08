@@ -16,7 +16,6 @@ class WorkOrderRequest extends FormRequest
     {
         $vehicleCategories = ['Tractor', 'Remolque', 'Dolly', 'Plataforma', 'Caja Refrigerada'];
         return [
-            'failure_report_id' => ['nullable', 'exists:failure_reports,id'],
             'unit_category' => ['required', Rule::in([...$vehicleCategories, 'Gastos de accidentes', 'Gastos de gruas', 'Mala operacion del operador', 'Rescate carretero'])],
             'maintenance_type' => [Rule::requiredIf(in_array($this->unit_category, $vehicleCategories, true)), 'nullable', Rule::in(['Preventivo', 'Correctivo'])],
             'unit_id' => ['required', 'exists:units,id'],

@@ -11,7 +11,6 @@ class WorkOrder extends Model
 {
     protected $fillable = [
         'folio',
-        'failure_report_id',
         'unit_category',
         'maintenance_type',
         'unit_id',
@@ -121,34 +120,37 @@ class WorkOrder extends Model
     {
         return $this->belongsTo(Unit::class);
     }
+    
     public function operator()
     {
         return $this->belongsTo(User::class, 'operator_id');
     }
+
     public function mechanic()
     {
         return $this->belongsTo(User::class, 'mechanic_id');
     }
+
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
     }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+    
     public function startedBy()
     {
         return $this->belongsTo(User::class, 'started_by');
     }
+
     public function closedBy()
     {
         return $this->belongsTo(User::class, 'closed_by');
     }
-    public function failureReport()
-    {
-        return $this->belongsTo(FailureReport::class, 'failure_report_id');
-    }
+
     public function purchaseOrders()
     {
         return $this->hasMany(PurchaseOrder::class, 'work_order_id');

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FailureReport;
 use App\Models\WorkOrder;
 use App\Models\Supplier;
 use App\Models\Unit;
@@ -26,7 +25,6 @@ class WorkshopCatalogController extends Controller
                 'mechanics' => User::searchList(['role_id' => 8, 'columns' => ['id', 'name']]),
                 'suppliers' => Supplier::searchList(['columns' => ['id', 'name']]),
                 'work_orders' => WorkOrder::searchList(['only_open' => true]),
-                'failure_reports' => FailureReport::searchList(['status' => 'Abierto']),
             ];
 
             return response()->json($catalogs);

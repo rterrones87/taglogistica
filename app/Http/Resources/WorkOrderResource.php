@@ -11,7 +11,6 @@ class WorkOrderResource extends JsonResource
         return [
             'id' => $this->id,
             'folio' => $this->folio,
-            'failure_report_id' => $this->failure_report_id,
             'unit_category' => $this->unit_category,
             'maintenance_type' => $this->maintenance_type,
             'unit_id' => $this->unit_id,

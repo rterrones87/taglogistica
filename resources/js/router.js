@@ -48,10 +48,8 @@ import DieselCost from './pages/forms/diesel_cost.vue';
 import ClientPlaces from './pages/client_places.vue';
 import MaintenanceNewWorkOrders from './pages/maintenance-new/list/work-orders.vue';
 import MaintenanceNewPurchaseOrders from './pages/maintenance-new/list/purchase-orders.vue';
-import MaintenanceNewFailureReports from './pages/maintenance-new/list/failure-reports.vue';
 import MaintenanceNewWorkOrderForm from './pages/maintenance-new/form/work-order-form.vue';
 import MaintenanceNewPurchaseOrderForm from './pages/maintenance-new/form/purchase-order-form.vue';
-import MaintenanceNewFailureReportForm from './pages/maintenance-new/form/failure-report-form.vue';
 
 import Dashboard from './pages/dashboards/dashboard.vue';
 import DashboardServices from './pages/dashboards/dashboard_services.vue';
@@ -166,10 +164,8 @@ const routes = [
             { path: 'maintenance-new/work-orders/:id', component: MaintenanceNewWorkOrderForm, meta: { requiresPermission: ['maintenances.view', 'maintenances.create', 'maintenances.edit'] } },
 
             { path: 'maintenance-new/purchase-orders', component: MaintenanceNewPurchaseOrders, meta: { requiresPermission: 'maintenances.view' } },
-            { path: 'maintenance-new/purchase-orders/:id', component: MaintenanceNewPurchaseOrderForm, meta: { requiresPermission: ['maintenances.view', 'maintenances.create', 'maintenances.edit'] } },
+            { path: 'maintenance-new/purchase-orders/:id', component: MaintenanceNewPurchaseOrderForm, meta: { requiresPermission: ['maintenances.view', 'maintenances.create', 'maintenances.edit'] } }
 
-            { path: 'maintenance-new/failure-reports', component: MaintenanceNewFailureReports, meta: { requiresPermission: 'maintenances.view' } },
-            { path: 'maintenance-new/failure-reports/:id', component: MaintenanceNewFailureReportForm, meta: { requiresPermission: ['maintenances.view', 'maintenances.create', 'maintenances.edit'] } },
         ]
     },
 ];

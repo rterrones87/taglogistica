@@ -85,13 +85,6 @@ return [
             'days' => 60,
         ],
 
-        'failure-report' => [
-            'driver' => 'daily',
-            'path' => storage_path('logs/failure-report/failure-report.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
-            'days' => 60,
-        ],
-
         'maintenance-catalog' => [
             'driver' => 'daily',
             'path' => storage_path('logs/maintenance-catalog/maintenance-catalog.log'),

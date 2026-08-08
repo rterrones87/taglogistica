@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::create('work_orders', function (Blueprint $table) {
             $table->id();
             $table->string('folio', 20)->unique();
-            $table->foreignId('failure_report_id')->nullable()->constrained('failure_reports')->nullOnDelete();
             $table->string('unit_category', 40);
             $table->enum('maintenance_type', ['Preventivo', 'Correctivo'])->nullable();
             $table->foreignId('unit_id')->constrained('units');

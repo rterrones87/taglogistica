@@ -26,10 +26,7 @@ class RolePermissionSeeder extends Seeder
 
         // Administrador (role_id=1) - Todos los permisos
         $administrador->permissions()->sync(
-            Permission::whereNotIn('name', [
-                'maintenance_new.start_failure_report',
-                'maintenance_new.finish_failure_report',
-            ])->pluck('id')->toArray()
+            Permission::pluck('id')->toArray()
         );
 
         // Logística (role_id=2)
@@ -153,8 +150,6 @@ class RolePermissionSeeder extends Seeder
                 'maintenance_new.start_work_order',
                 'maintenance_new.close_work_order',
                 'maintenance_new.close_purchase_order',
-                'maintenance_new.start_failure_report',
-                'maintenance_new.finish_failure_report',
             ])->pluck('id')->toArray()
         );
 

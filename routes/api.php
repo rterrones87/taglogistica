@@ -27,7 +27,6 @@ use App\Http\Controllers\ServiceOperatorTypeController;
 use App\Http\Controllers\ServiceOperatorTypeRateController;
 use App\Http\Controllers\WorkOrderController;
 use App\Http\Controllers\PurchaseOrderController;
-use App\Http\Controllers\FailureReportController;
 use App\Http\Controllers\WorkshopCatalogController;
 
 /*
@@ -213,20 +212,6 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->middleware('permission:maintenance_new.close_purchase_order');
         });
 
-        Route::prefix('failure-reports')->group(function () {
-            Route::get('/', [FailureReportController::class, 'index'])
-                ->middleware('permission:maintenances.view');
-            Route::post('/', [FailureReportController::class, 'store'])
-                ->middleware('permission:maintenances.create');
-            Route::get('{failureReport}', [FailureReportController::class, 'show'])
-                ->middleware('permission:maintenances.view');
-            Route::put('{failureReport}', [FailureReportController::class, 'update'])
-                ->middleware('permission:maintenances.edit');
-            Route::post('{failureReport}/start', [FailureReportController::class, 'start'])
-                ->middleware('permission:maintenance_new.start_failure_report');
-            Route::post('{failureReport}/finish', [FailureReportController::class, 'finish'])
-                ->middleware('permission:maintenance_new.finish_failure_report');
-        });
     });
 
     // Tesorería

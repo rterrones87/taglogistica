@@ -21,16 +21,6 @@
                     <h3 class="mb-3 text-xl font-bold">Clasificacion</h3>
 
                     <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-                        <div class="form-item">
-                            <label>Reporte de falla</label>
-
-                            <select v-model="item.failure_report_id" @change="fillFromReport">
-                                <option :value="null">Sin reporte previo</option>
-                                <option v-for="report in catalogs.failure_reports" :key="report.id" :value="report.id">
-                                    {{ report.folio }} - {{ report.unit?.econame }}
-                                </option>
-                            </select>
-                        </div>
 
                         <div class="form-item">
                             <label>Tipo de unidad *</label>
@@ -258,7 +248,6 @@ const categories = [
 const vehicleCategories = categories.slice(0, 5);
 
 const item = reactive({
-    failure_report_id: null,
     unit_category: '',
     maintenance_type: '',
     unit_id: '',
@@ -276,7 +265,6 @@ const catalogs = reactive({
     operators: [],
     mechanics: [],
     suppliers: [],
-    failure_reports: [],
 });
 const errors = ref({});
 const vehicleCategory = computed(() => vehicleCategories.includes(item.unit_category));
@@ -287,24 +275,8 @@ onMounted(async () => {
     if (isEditing.value) {
         const response = await getWorkOrderDetailApi(route.params.id);
         Object.assign(item, response.data);
-    } else if (route.query.failure_report_id) {
-        item.failure_report_id = Number(route.query.failure_report_id);
-        fillFromReport();
     }
 });
-
-function fillFromReport() {
-    const report = catalogs.failure_reports.find((entry) => entry.id === item.failure_report_id);
-    if (!report) return;
-
-    Object.assign(item, {
-        unit_id: report.unit_id,
-        operator_id: report.operator_id,
-        initial_mileage: report.mileage,
-        opened_at: report.reported_at,
-        failure_description: report.description,
-    });
-}
 
 async function save() {
     try {

@@ -170,7 +170,6 @@ const rawMenuItems = [
     name: "Mantenimientos",
     requiresAnyPermission: ['maintenances.view'],
     subMenu: [
-      { name: "Reporte de fallas", path: "/panel/maintenance-new/failure-reports", requiresPermission: 'maintenances.view' },
       { name: "Ordenes de trabajo", path: "/panel/maintenance-new/work-orders", requiresPermission: 'maintenances.view' },
       { name: "Ordenes de compra", path: "/panel/maintenance-new/purchase-orders", requiresPermission: 'maintenances.view' },
     ]
