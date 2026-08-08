@@ -22,13 +22,14 @@ class RolePermissionSeeder extends Seeder
         $tesoreria = Role::where('id', 6)->first(); // Tesorería
         $direccion = Role::where('id', 7)->first(); // Dirección
         $chofer = Role::where('id', 8)->first(); // Chofer
-
-        // Obtener todos los permisos para Administrador
-        $todosLosPermisos = Permission::pluck('name')->toArray();
+        $gerenteMantenimiento = Role::firstOrCreate(['name' => 'Gerente Mantenimiento']);
 
         // Administrador (role_id=1) - Todos los permisos
         $administrador->permissions()->sync(
-            Permission::pluck('id')->toArray()
+            Permission::whereNotIn('name', [
+                'maintenance_new.start_failure_report',
+                'maintenance_new.finish_failure_report',
+            ])->pluck('id')->toArray()
         );
 
         // Logística (role_id=2)
@@ -138,6 +139,22 @@ class RolePermissionSeeder extends Seeder
                 'services.download',
                 'dashboard.view_services',
                 'dashboard.view_maintenances',
+                'maintenances.view',
+                'maintenance_new.close_work_order',
+                'maintenance_new.close_purchase_order',
+            ])->pluck('id')->toArray()
+        );
+
+        $gerenteMantenimiento->permissions()->sync(
+            Permission::whereIn('name', [
+                'maintenances.view',
+                'maintenances.create',
+                'maintenances.edit',
+                'maintenance_new.start_work_order',
+                'maintenance_new.close_work_order',
+                'maintenance_new.close_purchase_order',
+                'maintenance_new.start_failure_report',
+                'maintenance_new.finish_failure_report',
             ])->pluck('id')->toArray()
         );
 

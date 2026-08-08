@@ -143,26 +143,36 @@ const rawMenuItems = [
     path: "/panel/nominas",
     requiresPermission: 'operators.view_payments'
   },
-  { 
-    icon: "mantto", 
-    name: "Mantenimientos", 
-    requiresAnyPermission: ['maintenances.view', 'suppliers.view', 'units.view'],
+//   {
+//     icon: "mantto",
+//     name: "Mantenimientos",
+//     requiresAnyPermission: ['maintenances.view', 'suppliers.view', 'units.view'],
+//     subMenu: [
+//         {
+//             name: "Mantenimientos",
+//             path: "/panel/maintenances",
+//             requiresPermission: 'maintenances.view'
+//         },
+//         {
+//             name: "Proveedores",
+//             path: "/panel/suppliers",
+//             requiresPermission: 'suppliers.view'
+//         },
+//         {
+//             name: "Unidades",
+//             path: "/panel/units",
+//             requiresPermission: 'units.view'
+//         },
+//     ]
+//   },
+  {
+    icon: "mantto",
+    name: "Mantenimientos",
+    requiresAnyPermission: ['maintenances.view'],
     subMenu: [
-        { 
-            name: "Mantenimientos", 
-            path: "/panel/maintenances",
-            requiresPermission: 'maintenances.view'
-        },
-        { 
-            name: "Proveedores", 
-            path: "/panel/suppliers",
-            requiresPermission: 'suppliers.view'
-        },
-        { 
-            name: "Unidades", 
-            path: "/panel/units",
-            requiresPermission: 'units.view'
-        },
+      { name: "Reporte de fallas", path: "/panel/maintenance-new/failure-reports", requiresPermission: 'maintenances.view' },
+      { name: "Ordenes de trabajo", path: "/panel/maintenance-new/work-orders", requiresPermission: 'maintenances.view' },
+      { name: "Ordenes de compra", path: "/panel/maintenance-new/purchase-orders", requiresPermission: 'maintenances.view' },
     ]
   },
   { 
@@ -373,13 +383,3 @@ const getIcon = (name) => {
 }
 
 </script>
-
-
-
-
-
- 
-
-  
-  
-  

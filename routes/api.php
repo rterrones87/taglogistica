@@ -25,6 +25,10 @@ use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\ClientPlaceController;
 use App\Http\Controllers\ServiceOperatorTypeController;
 use App\Http\Controllers\ServiceOperatorTypeRateController;
+use App\Http\Controllers\WorkOrderController;
+use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\FailureReportController;
+use App\Http\Controllers\WorkshopCatalogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,24 +47,24 @@ Route::post('fcm_token/register', [AuthController::class, 'fcm_token_register'])
 
 Route::middleware('auth:sanctum')->group(function () {
     //Route::post('logout', [AuthController::class, 'logout']);
-    
+
     // Auth y Catálogos (sin permisos, disponibles para todos los autenticados)
     Route::put('password/{user_id}', [AuthController::class, 'password'])->middleware('permission:users.change_password');
     Route::get('roles', [AuthController::class, 'roles']);
-    
+
     // Gestión de Permisos por Rol
     Route::get('roles/permissions', [RolePermissionController::class, 'permissions'])->middleware('permission:roles.manage_permissions');
     Route::get('roles/{role}/permissions', [RolePermissionController::class, 'show'])->middleware('permission:roles.manage_permissions');
     Route::put('roles/{role}/permissions', [RolePermissionController::class, 'update'])->middleware('permission:roles.manage_permissions');
     Route::post('roles', [RolePermissionController::class, 'store']);
-    
+
     Route::get('catalog/units', [CatalogController::class, 'units']);
     Route::get('unit-types', [UnitTypeController::class, 'index']);
     Route::get('catalog/containers', [CatalogController::class, 'containers']);
     Route::get('catalog/terminals', [CatalogController::class, 'terminals']);
     Route::get('catalog/destines', [CatalogController::class, 'destines']);
     Route::get('catalog/container-numbers', [CatalogController::class, 'container_numbers']);
-    
+
     // Destinos de Clientes
     Route::get('client-places', [ClientPlaceController::class, 'index'])->middleware('permission:client_places.view');
     Route::post('client-places', [ClientPlaceController::class, 'store'])->middleware('permission:client_places.create');
@@ -78,14 +82,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('clients/{client}', [ClientController::class, 'show'])->middleware('permission:clients.view');
     Route::put('clients/{client}', [ClientController::class, 'update'])->middleware('permission:clients.edit');
     Route::delete('clients/{client}', [ClientController::class, 'destroy'])->middleware('permission:clients.delete');
-    
+
     // Proveedores
     Route::get('suppliers', [SupplierController::class, 'index'])->middleware('permission:suppliers.view');
     Route::post('suppliers', [SupplierController::class, 'store'])->middleware('permission:suppliers.create');
     Route::get('suppliers/{supplier}', [SupplierController::class, 'show'])->middleware('permission:suppliers.view');
     Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->middleware('permission:suppliers.edit');
     Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete');
-    
+
     // Unidades
     Route::get('units/maintenance', [UnitController::class, 'indexForMaintenance'])->middleware('permission:units.view,units.consult');
     Route::get('units', [UnitController::class, 'index'])->middleware('permission:units.view,units.consult');
@@ -93,14 +97,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('units/{unit}', [UnitController::class, 'show'])->middleware('permission:units.view');
     Route::put('units/{unit}', [UnitController::class, 'update'])->middleware('permission:units.edit');
     Route::delete('units/{unit}', [UnitController::class, 'destroy'])->middleware('permission:units.delete');
-    
+
     // Lugares
     Route::get('places', [PlaceController::class, 'index'])->middleware('permission:places.view,places.consult');
     Route::post('places', [PlaceController::class, 'store'])->middleware('permission:places.create');
     Route::get('places/{place}', [PlaceController::class, 'show'])->middleware('permission:places.view');
     Route::put('places/{place}', [PlaceController::class, 'update'])->middleware('permission:places.edit');
     Route::delete('places/{place}', [PlaceController::class, 'destroy'])->middleware('permission:places.delete');
-    
+
     // Usuarios
     Route::get('users', [UserController::class, 'index'])->middleware('permission:users.view,users.consult');
     Route::post('users', [UserController::class, 'store'])->middleware('permission:users.create');
@@ -114,7 +118,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('booths/{booth}', [BoothController::class, 'show'])->middleware('permission:booths.view');
     Route::put('booths/{booth}', [BoothController::class, 'update'])->middleware('permission:booths.edit');
     Route::delete('booths/{booth}', [BoothController::class, 'destroy'])->middleware('permission:booths.delete');
-    
+
     // Servicios
     Route::get('services', [ServiceController::class, 'index'])->middleware('permission:services.view,services.consult');
     Route::post('services', [ServiceController::class, 'store'])->middleware(['permission:services.create', 'idempotency']);
@@ -132,10 +136,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('services/weekly-payments/operators', [ServiceController::class, 'weekly_payments'])->middleware('permission:operator_payments.view');
     Route::get('services/weekly-payments/operator/{operator_id}', [ServiceController::class, 'weekly_operator_payments'])->middleware('permission:operator_payments.view');
     Route::put('services/weekly-payments/operator/{operator_id}', [ServiceController::class, 'save_weekly_operator_payments'])->middleware('permission:operator_payments.create,operator_payments.edit');
-    
+
     // Travels (mantener sin cambios por ahora)
     Route::apiResource('travels', TravelController::class);
-    
+
     // Operadores
     Route::get('operators', [OperatorController::class, 'index'])->middleware('permission:operators.view,operators.consult');
     Route::post('operators', [OperatorController::class, 'store'])->middleware('permission:operators.create');
@@ -143,7 +147,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('operators/{operator}', [OperatorController::class, 'update'])->middleware('permission:operators.edit');
     Route::delete('operators/{operator}', [OperatorController::class, 'destroy'])->middleware('permission:operators.delete');
     Route::get('operator/{id}/payments', [OperatorController::class, 'payments'])->middleware('permission:operators.view_payments');
-    
 
     // Inventarios
     Route::get('inventories', [InventoryController::class, 'index'])->middleware('permission:inventories.view');
@@ -151,22 +154,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('inventories/{inventory}', [InventoryController::class, 'show'])->middleware('permission:inventories.view');
     Route::put('inventories/{inventory}', [InventoryController::class, 'update'])->middleware('permission:inventories.edit');
     Route::delete('inventories/{inventory}', [InventoryController::class, 'destroy'])->middleware('permission:inventories.delete');
-    
+
     // Llantas
     Route::get('tires', [TireController::class, 'index'])->middleware('permission:tires.view');
     Route::post('tires', [TireController::class, 'store'])->middleware('permission:tires.create');
     Route::get('tires/{tire}', [TireController::class, 'show'])->middleware('permission:tires.view');
     Route::put('tires/{tire}', [TireController::class, 'update'])->middleware('permission:tires.edit');
     Route::delete('tires/{tire}', [TireController::class, 'destroy'])->middleware('permission:tires.delete');
-    
+
     // Costos
     Route::get('costs/{cost}', [CostController::class, 'show'])->middleware('permission:costs.view');
     Route::put('costs/{cost}', [CostController::class, 'update'])->middleware('permission:costs.edit');
-    
+
     // Gastos Extras
     Route::get('extras/{extra}', [ExtrasController::class, 'show'])->middleware('permission:expenses.view');
     Route::put('extras/{extra}', [ExtrasController::class, 'update'])->middleware('permission:expenses.edit');
-    
+
     // Mantenimientos
     Route::get('maintenances', [MaintenanceController::class, 'index'])->middleware('permission:maintenances.view');
     Route::post('maintenances', [MaintenanceController::class, 'store'])->middleware('permission:maintenances.create');
@@ -177,6 +180,54 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('maintenances/cancel/{id}', [MaintenanceController::class, 'cancel'])->middleware('permission:maintenances.cancel');
     Route::post('maintenances/change_state', [MaintenanceController::class, 'change_state'])->middleware('permission:maintenances.change_state');
     Route::post('maintenances/upload-photos/{id}', [MaintenanceController::class, 'uploadEvidence'])->middleware('permission:maintenances.upload_evidence');
+
+    Route::prefix('maintenance-new')->group(function () {
+        Route::get('catalogs', [WorkshopCatalogController::class, 'index'])
+            ->middleware('permission:maintenances.view');
+
+        Route::prefix('work-orders')->group(function () {
+            Route::get('/', [WorkOrderController::class, 'index'])
+                ->middleware('permission:maintenances.view');
+            Route::post('/', [WorkOrderController::class, 'store'])
+                ->middleware('permission:maintenances.create');
+            Route::get('{workOrder}', [WorkOrderController::class, 'show'])
+                ->middleware('permission:maintenances.view');
+            Route::put('{workOrder}', [WorkOrderController::class, 'update'])
+                ->middleware('permission:maintenances.edit');
+            Route::post('{workOrder}/start', [WorkOrderController::class, 'start'])
+                ->middleware('permission:maintenance_new.start_work_order');
+            Route::post('{workOrder}/close', [WorkOrderController::class, 'close'])
+                ->middleware('permission:maintenance_new.close_work_order');
+        });
+
+        Route::prefix('purchase-orders')->group(function () {
+            Route::get('/', [PurchaseOrderController::class, 'index'])
+                ->middleware('permission:maintenances.view');
+            Route::post('/', [PurchaseOrderController::class, 'store'])
+                ->middleware('permission:maintenances.create');
+            Route::get('{purchaseOrder}', [PurchaseOrderController::class, 'show'])
+                ->middleware('permission:maintenances.view');
+            Route::post('{purchaseOrder}', [PurchaseOrderController::class, 'update'])
+                ->middleware('permission:maintenances.edit');
+            Route::post('{purchaseOrder}/close', [PurchaseOrderController::class, 'close'])
+                ->middleware('permission:maintenance_new.close_purchase_order');
+        });
+
+        Route::prefix('failure-reports')->group(function () {
+            Route::get('/', [FailureReportController::class, 'index'])
+                ->middleware('permission:maintenances.view');
+            Route::post('/', [FailureReportController::class, 'store'])
+                ->middleware('permission:maintenances.create');
+            Route::get('{failureReport}', [FailureReportController::class, 'show'])
+                ->middleware('permission:maintenances.view');
+            Route::put('{failureReport}', [FailureReportController::class, 'update'])
+                ->middleware('permission:maintenances.edit');
+            Route::post('{failureReport}/start', [FailureReportController::class, 'start'])
+                ->middleware('permission:maintenance_new.start_failure_report');
+            Route::post('{failureReport}/finish', [FailureReportController::class, 'finish'])
+                ->middleware('permission:maintenance_new.finish_failure_report');
+        });
+    });
 
     // Tesorería
     Route::get('treasury/maintenances', [TreasuryController::class, 'maintenances'])->middleware('permission:treasury.view_maintenances');
@@ -197,17 +248,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('download/treasury/maintenances', [TreasuryController::class, 'downloadMaintenances'])->middleware('permission:treasury.view_maintenances');
 
     // Aprobaciones
-    Route::post('/approvals/{approval}/approve', [ApprovalController::class, 'approve'])->middleware('permission:approvals.approve')->name('approvals.approve');
-    Route::post('/approvals/{approval}/reject',  [ApprovalController::class, 'reject'])->middleware('permission:approvals.reject')->name('approvals.reject');
-    Route::get('/approvals',  [ApprovalController::class, 'index'])->middleware('permission:approvals.view')->name('approvals.index');
-    
+    Route::post('/approvals/{approval}/approve', [ApprovalController::class, 'approve'])
+->middleware('permission:approvals.approve')
+        ->name('approvals.approve');
+    Route::post('/approvals/{approval}/reject', [ApprovalController::class, 'reject'])
+        ->middleware('permission:approvals.reject')
+        ->name('approvals.reject');
+    Route::get('/approvals', [ApprovalController::class, 'index'])
+        ->middleware('permission:approvals.view')
+        ->name('approvals.index');
+
     // Costos de Diesel
-    Route::get('diesel_costs', [ServiceController::class, 'diesel_costs'])->middleware('permission:diesel_costs.view')->name('diesel_costs');
-    Route::post('diesel_cost', [ServiceController::class, 'diesel_cost'])->middleware('permission:diesel_costs.create,diesel_costs.edit')->name('diesel_cost');
-    
+    Route::get('diesel_costs', [ServiceController::class, 'diesel_costs'])
+        ->middleware('permission:diesel_costs.view')
+        ->name('diesel_costs');
+    Route::post('diesel_cost', [ServiceController::class, 'diesel_cost'])
+        ->middleware('permission:diesel_costs.create,diesel_costs.edit')
+        ->name('diesel_cost');
+
     // Comisiones
-    Route::post('commission/service', [ServiceController::class, 'save_commission'])->middleware('permission:services.edit')->name('save_commission');
-    
+    Route::post('commission/service', [ServiceController::class, 'save_commission'])
+        ->middleware('permission:services.edit')
+        ->name('save_commission');
+
     // Dashboards
     Route::get('dashboard/services', [ServiceController::class, 'dashboard'])->middleware('permission:dashboard.view_services');
     Route::get('dashboard/services-details', [ServiceController::class, 'dashboard_services'])->middleware('permission:dashboard.view_services');
@@ -223,7 +286,3 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('service-operator-type-rates', [ServiceOperatorTypeRateController::class, 'store']);
     Route::delete('service-operator-type-rates/{id}', [ServiceOperatorTypeRateController::class, 'destroy']);
 });
-
-
-
-

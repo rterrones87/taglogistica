@@ -246,6 +246,10 @@
 	    background-position: center;
 	}
 
+	.form-control {
+	    @apply w-full my-2 block;
+		border: 1px solid rgba(0,0,0,.2);
+	}
 	/* FORM ITEM */
 	.form-item {
 	    @apply w-full my-2 block;

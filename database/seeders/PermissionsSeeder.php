@@ -59,6 +59,11 @@ class PermissionsSeeder extends Seeder
             'maintenances.delete',
             'maintenances.change_state',
             'maintenances.upload_evidence',
+            'maintenance_new.start_work_order',
+            'maintenance_new.close_work_order',
+            'maintenance_new.close_purchase_order',
+            'maintenance_new.start_failure_report',
+            'maintenance_new.finish_failure_report',
             
             // Inventarios
             'inventories.view',
