@@ -137,8 +137,6 @@ class RolePermissionSeeder extends Seeder
                 'dashboard.view_services',
                 'dashboard.view_maintenances',
                 'maintenances.view',
-                'maintenance_new.close_work_order',
-                'maintenance_new.close_purchase_order',
             ])->pluck('id')->toArray()
         );
 

@@ -59,6 +59,8 @@ class PermissionsSeeder extends Seeder
             'maintenances.delete',
             'maintenances.change_state',
             'maintenances.upload_evidence',
+
+            //Nuevo modulo de mantenimiento
             'maintenance_new.start_work_order',
             'maintenance_new.close_work_order',
             'maintenance_new.close_purchase_order',

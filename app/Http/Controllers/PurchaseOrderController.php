@@ -49,11 +49,11 @@ class PurchaseOrderController extends Controller
         }
     }
 
-    public function show(Request $request, PurchaseOrder $maintenancePurchaseOrder)
+    public function show(PurchaseOrder $purchaseOrder)
     {
         try {
 
-            $order = $maintenancePurchaseOrder->detail();
+            $order = $purchaseOrder->detail();
 
             return new PurchaseOrderResource($order);
 
@@ -62,11 +62,11 @@ class PurchaseOrderController extends Controller
         }
     }
 
-    public function update(PurchaseOrderRequest $request, PurchaseOrder $maintenancePurchaseOrder)
+    public function update(PurchaseOrderRequest $request, PurchaseOrder $purchaseOrder)
     {
         try {
 
-            $order = $maintenancePurchaseOrder->updateRegister($request->validated(), $request->allFiles());
+            $order = $purchaseOrder->updateRegister($request->validated(), $request->allFiles());
 
             Log::channel(self::LOG_CHANNEL)->info('Orden de compra actualizada.', [
                 'user_id' => $request->user()->id,

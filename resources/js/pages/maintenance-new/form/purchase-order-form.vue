@@ -174,10 +174,12 @@ const selectedWorkOrder = computed(() => catalogs.work_orders.find((order) => or
 const selectedUnitName = computed(() => selectedWorkOrder.value?.unit?.econame || item.work_order?.unit?.econame || '');
 
 onMounted(async () => {
+
     Object.assign(catalogs, await getWorkshopCatalogsApi());
 
     if (isEditing.value) {
         const response = await getPurchaseOrderDetailApi(route.params.id);
+        console.log(response.data)
         Object.assign(item, response.data);
     }
 });
@@ -220,6 +222,7 @@ async function save() {
 
         dialogs.fire('Excelente', 'Orden guardada correctamente', 'success');
         router.push('/panel/maintenance-new/purchase-orders');
+        
     } catch (error) {
         errors.value = error.response?.data?.errors || {};
         dialogs.fire('Error', error.response?.data?.message || 'Revise los campos', 'error');
