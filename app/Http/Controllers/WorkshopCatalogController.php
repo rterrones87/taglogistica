@@ -22,7 +22,7 @@ class WorkshopCatalogController extends Controller
             $catalogs = [
                 'units' => Unit::searchList(['columns' => ['id', 'econame', 'type']]),
                 'operators' => User::searchList(['role_id' => 8, 'columns' => ['id', 'name']]),
-                'mechanics' => User::searchList(['role_id' => 8, 'columns' => ['id', 'name']]),
+                'mechanics' => User::searchList(['role_id' => 11, 'columns' => ['id', 'name']]),
                 'suppliers' => Supplier::searchList(['columns' => ['id', 'name']]),
                 'work_orders' => WorkOrder::searchList(['only_open' => true]),
             ];
