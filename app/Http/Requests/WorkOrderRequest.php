@@ -22,7 +22,7 @@ class WorkOrderRequest extends FormRequest
             'initial_mileage' => ['required', 'integer', 'min:1'],
             'opened_at' => ['required', 'date'],
             'operator_id' => ['required', 'exists:users,id'],
-            'mechanic_id' => ['required', Rule::exists('users', 'id')->where(fn($query) => $query->where('role_id', 8)->where('active', 1)->where('zombie', 0))],
+            'mechanic_id' => ['required', Rule::exists('users', 'id')->where(fn($query) => $query->where('role_id', 11)->where('active', 1)->where('zombie', 0))],
             'failure_description' => ['required', 'string', 'max:5000'],
             'work_type' => ['required', Rule::in(['Interno', 'Externo'])],
             'supplier_id' => [Rule::requiredIf($this->work_type === 'Externo'), 'nullable', 'exists:suppliers,id'],
