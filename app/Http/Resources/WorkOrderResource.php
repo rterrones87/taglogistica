@@ -21,10 +21,11 @@ class WorkOrderResource extends JsonResource
             'operator' => $this->whenLoaded('operator'),
             'mechanic_id' => $this->mechanic_id,
             'mechanic' => $this->whenLoaded('mechanic'),
+            'responsible' => $this->work_type === 'Externo'
+                ? 'Externo'
+                : "Mecanico\n".($this->mechanic?->name ?? ''),
             'failure_description' => $this->failure_description,
             'work_type' => $this->work_type,
-            'supplier_id' => $this->supplier_id,
-            'supplier' => $this->whenLoaded('supplier'),
             'status' => $this->status,
             'purchase_orders' => PurchaseOrderResource::collection($this->whenLoaded('purchaseOrders')),
             'purchase_orders_count' => $this->when(isset($this->purchase_orders_count), $this->purchase_orders_count),

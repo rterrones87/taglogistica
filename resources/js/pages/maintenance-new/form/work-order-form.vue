@@ -117,19 +117,6 @@
                         </div>
 
 
-
-                        <div v-if="item.work_type === 'Externo'" class="form-item">
-                            <label>Proveedor *</label>
-
-                            <select v-model="item.supplier_id" required>
-                                <option value="">Seleccione</option>
-                                <option v-for="supplier in catalogs.suppliers" :key="supplier.id" :value="supplier.id">
-                                    {{ supplier.name }}
-                                </option>
-                            </select>
-
-                            <ErrorText :errors="errors.supplier_id" />
-                        </div>
                     </div>
                 </section>
 
@@ -268,7 +255,6 @@ const item = reactive({
     mechanic_id: '',
     failure_description: '',
     work_type: '',
-    supplier_id: null,
 });
 
 const catalogs = reactive({
@@ -308,7 +294,6 @@ onMounted(async () => {
 async function save() {
     try {
         errors.value = {};
-        if (item.work_type !== 'Externo') item.supplier_id = null;
         if (item.work_type === 'Externo') item.mechanic_id = null;
         if (!vehicleCategory.value) item.maintenance_type = null;
 

@@ -20,7 +20,6 @@ return new class extends Migration
             $table->foreignId('mechanic_id')->nullable()->constrained('users');
             $table->text('failure_description');
             $table->enum('work_type', ['Interno', 'Externo']);
-            $table->foreignId('supplier_id')->nullable()->constrained('suppliers');
             $table->enum('status', ['Abierto', 'En Proceso', 'Cerrado'])->default('Abierto');
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('started_by')->nullable()->constrained('users');

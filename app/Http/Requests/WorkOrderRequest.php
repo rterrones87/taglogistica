@@ -25,7 +25,6 @@ class WorkOrderRequest extends FormRequest
             'mechanic_id' => [Rule::requiredIf($this->work_type === 'Interno'), 'nullable', Rule::exists('users', 'id')->where(fn($query) => $query->where('role_id', 11)->where('active', 1)->where('zombie', 0))],
             'failure_description' => ['required', 'string', 'max:5000'],
             'work_type' => ['required', Rule::in(['Interno', 'Externo'])],
-            'supplier_id' => [Rule::requiredIf($this->work_type === 'Externo'), 'nullable', 'exists:suppliers,id'],
         ];
     }
 }

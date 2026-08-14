@@ -20,7 +20,6 @@ class WorkOrder extends Model
         'mechanic_id',
         'failure_description',
         'work_type',
-        'supplier_id',
         'status',
         'created_by',
         'started_by',
@@ -37,7 +36,7 @@ class WorkOrder extends Model
     public static function searchList(array $filters)
     {
         $query = self::query()
-            ->with(['unit', 'operator:id,name', 'mechanic:id,name', 'supplier:id,name'])
+            ->with(['unit', 'operator:id,name', 'mechanic:id,name'])
             ->withCount([
                 'purchaseOrders as purchase_orders_count' => fn($query) => $query->where('status', 'Aprobada'),
             ])
@@ -127,7 +126,7 @@ class WorkOrder extends Model
 
     private static function detailRelations(): array
     {
-        return ['unit', 'operator:id,name', 'mechanic:id,name', 'supplier:id,name', 'creator:id,name', 'startedBy:id,name', 'closedBy:id,name', 'purchaseOrders.supplier:id,name'];
+        return ['unit', 'operator:id,name', 'mechanic:id,name', 'creator:id,name', 'startedBy:id,name', 'closedBy:id,name'];
     }
 
     public function unit()
@@ -143,11 +142,6 @@ class WorkOrder extends Model
     public function mechanic()
     {
         return $this->belongsTo(User::class, 'mechanic_id');
-    }
-
-    public function supplier()
-    {
-        return $this->belongsTo(Supplier::class);
     }
 
     public function creator()

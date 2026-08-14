@@ -59,7 +59,13 @@ const columns = [
             : value,
     },
     { key: 'status', label: 'Estado', sortable: true, filterable: true },
-    { key: 'mechanic.name', label: 'Mecanico', sortable: true, filterable: true },
+    {
+        key: 'responsible',
+        label: 'Responsable',
+        sortable: true,
+        filterable: true,
+        cellClass: 'whitespace-pre-line',
+    },
     { key: 'purchase_orders_count', label: 'OC aprobadas', sortable: true },
     {
         key: 'total_cost',

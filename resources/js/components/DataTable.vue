@@ -88,6 +88,7 @@
               v-for="column in columns"
               :key="column.key"
               :data-label="column.label"
+              :class="column.cellClass"
             >
               {{ getFormattedValue(row, column) }}
             </td>
@@ -189,7 +190,7 @@
             class="flex justify-between py-2 border-b border-gray-100 last:border-b-0"
           >
             <span class="font-semibold text-gray-600">{{ column.label }}:</span>
-            <span class="text-gray-900">{{ getFormattedValue(row, column) }}</span>
+            <span :class="['text-gray-900', column.cellClass]">{{ getFormattedValue(row, column) }}</span>
           </div>
           
           <!-- Slot de acciones para móvil -->
