@@ -83,7 +83,8 @@ class Approval extends Model {
             'maintenance_expenses'    => 'Gastos de mantenimiento',
             'extra_diesel'            => 'Diesel extra',
             'extra_booth'             => 'Caseta extra',
-            'tire_expenses'           => 'Cambio de llanta'
+            'tire_expenses'           => 'Cambio de llanta',
+            'purchase_order'          => 'Orden de compra',
         ];
 
         return $map[$this->kind] ?? ucfirst(str_replace('_', ' ', $this->kind));

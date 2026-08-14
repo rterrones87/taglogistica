@@ -37,6 +37,7 @@ import Maintenance from './pages/forms/maintenance.vue';
 import Extras from './pages/forms/extras.vue';
 import TreasuryServices from './pages/treasury/services.vue';
 import TreasuryMaintenances from './pages/treasury/maintenances.vue';
+import TreasuryPurchaseOrders from './pages/treasury/purchase-orders.vue';
 import TreasuryNominas from './pages/treasury/nominas.vue';
 import Unauthorized from './pages/unauthorized.vue';
 import Approvals from './pages/approvals.vue';
@@ -47,7 +48,6 @@ import DieselCosts from './pages/diesel_costs.vue';
 import DieselCost from './pages/forms/diesel_cost.vue';
 import ClientPlaces from './pages/client_places.vue';
 import MaintenanceNewWorkOrders from './pages/maintenance-new/list/work-orders.vue';
-import MaintenanceNewPurchaseOrders from './pages/maintenance-new/list/purchase-orders.vue';
 import MaintenanceNewWorkOrderForm from './pages/maintenance-new/form/work-order-form.vue';
 import MaintenanceNewPurchaseOrderForm from './pages/maintenance-new/form/purchase-order-form.vue';
 
@@ -133,9 +133,11 @@ const routes = [
             { path: 'service/historical/:id?', component: Historical, meta: { requiresPermission: 'services.view' }  },
             { path: 'inventories', component: Inventories, meta: {requiresPermission: 'inventories.view'} },
             { path: 'tires', component: Tires, meta: {requiresPermission: 'tires.view'} },
-            { path: 'supplier/:id?', component: Supplier, meta: { requiresPermission: ['suppliers.view', 'suppliers.create', 'suppliers.edit'] } },
+            { path: 'supplier', component: Supplier, meta: { requiresPermission: 'suppliers.create' } },
+            { path: 'supplier/:id', component: Supplier, meta: { requiresPermission: 'suppliers.edit' } },
             //{ path: 'travel/:id?', component: Travel, meta: { requiresAuth: true } },
-            { path: 'unit/:id?', component: Unit, meta: { requiresPermission: ['units.view', 'units.create', 'units.edit'] } },
+            { path: 'unit', component: Unit, meta: { requiresPermission: 'units.create' } },
+            { path: 'unit/:id', component: Unit, meta: { requiresPermission: 'units.edit' } },
             { path: 'user/:id?', component: User, meta: { requiresPermission: ['users.view', 'users.create', 'users.edit'] } },
             { path: 'operator/:id?', component: Operator, meta: { requiresPermission: ['operators.view', 'operators.create', 'operators.edit'] } },
             { path: 'profile/:id?', component: Profile, meta: { requiresPermission: 'users.change_password' } },
@@ -148,6 +150,7 @@ const routes = [
             //{ path: 'maintenance/:id?', component: Maintenance, meta: { requiresPermission: ['maintenances.view', 'maintenances.create', 'maintenances.edit'] } },
             { path: 'treasury/services', component: TreasuryServices, meta: { requiresPermission: 'treasury.view_services' } },
             { path: 'treasury/maintenances', component: TreasuryMaintenances, meta: { requiresPermission: 'treasury.view_maintenances' } },
+            { path: 'treasury/purchase-orders', component: TreasuryPurchaseOrders, meta: { requiresPermission: 'treasury.view_purchase_orders' } },
             { path: 'treasury/nominas', component: TreasuryNominas, meta: { requiresPermission: 'treasury.view_payments' } },
             { path: 'operators/payments', component: OperatorPayments, meta : { requiresPermission: 'operator_payments.view' } },
             { path: 'operators/operator_payment/:id?', component: OperatorPayment, meta : { requiresPermission: ['operator_payments.view', 'operator_payments.create', 'operator_payments.edit'] } },
@@ -161,10 +164,11 @@ const routes = [
             { path: 'client-places', component: ClientPlaces, meta: { requiresPermission: 'client_places.view' } },
 
             { path: 'maintenance-new/work-orders', component: MaintenanceNewWorkOrders, meta: { requiresPermission: 'maintenances.view' } },
-            { path: 'maintenance-new/work-orders/:id', component: MaintenanceNewWorkOrderForm, meta: { requiresPermission: ['maintenances.view', 'maintenances.create', 'maintenances.edit'] } },
+            { path: 'maintenance-new/work-orders/new', component: MaintenanceNewWorkOrderForm, meta: { requiresPermission: 'maintenances.create' } },
+            { path: 'maintenance-new/work-orders/:id', component: MaintenanceNewWorkOrderForm, meta: { requiresPermission: 'maintenances.view' } },
 
-            { path: 'maintenance-new/purchase-orders', component: MaintenanceNewPurchaseOrders, meta: { requiresPermission: 'maintenances.view' } },
-            { path: 'maintenance-new/purchase-orders/:id', component: MaintenanceNewPurchaseOrderForm, meta: { requiresPermission: ['maintenances.view', 'maintenances.create', 'maintenances.edit'] } }
+            { path: 'maintenance-new/purchase-orders/new', component: MaintenanceNewPurchaseOrderForm, meta: { requiresPermission: 'maintenances.create' } },
+            { path: 'maintenance-new/purchase-orders/:id', component: MaintenanceNewPurchaseOrderForm, meta: { requiresPermission: 'maintenances.view' } }
 
         ]
     },

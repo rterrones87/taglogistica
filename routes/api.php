@@ -185,33 +185,31 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('permission:maintenances.view');
 
         Route::prefix('work-orders')->group(function () {
-            Route::get('/', [WorkOrderController::class, 'index'])
-                ->middleware('permission:maintenances.view');
-            Route::post('/', [WorkOrderController::class, 'store'])
-                ->middleware('permission:maintenances.create');
-            Route::get('{workOrder}', [WorkOrderController::class, 'show'])
-                ->middleware('permission:maintenances.view');
-            Route::put('{workOrder}', [WorkOrderController::class, 'update'])
-                ->middleware('permission:maintenances.edit');
-            Route::post('{workOrder}/start', [WorkOrderController::class, 'start'])
-                ->middleware('permission:maintenance_new.start_work_order');
-            Route::post('{workOrder}/close', [WorkOrderController::class, 'close'])
-                ->middleware('permission:maintenance_new.close_work_order');
+            Route::get('/', [WorkOrderController::class, 'index'])->middleware('permission:maintenances.view');
+            Route::post('/', [WorkOrderController::class, 'store'])->middleware('permission:maintenances.create');
+            Route::get('{workOrder}', [WorkOrderController::class, 'show'])->middleware('permission:maintenances.view');
+            Route::put('{workOrder}', [WorkOrderController::class, 'update'])->middleware('permission:maintenances.edit');
+            Route::post('{workOrder}/start', [WorkOrderController::class, 'start'])->middleware('permission:maintenances.change_state');
+            Route::post('{workOrder}/close', [WorkOrderController::class, 'close'])->middleware('permission:maintenances.change_state');
         });
 
         Route::prefix('purchase-orders')->group(function () {
-            Route::get('/', [PurchaseOrderController::class, 'index'])
-                ->middleware('permission:maintenances.view');
-            Route::post('/', [PurchaseOrderController::class, 'store'])
-                ->middleware('permission:maintenances.create');
-            Route::get('{purchaseOrder}', [PurchaseOrderController::class, 'show'])
-                ->middleware('permission:maintenances.view');
-            Route::post('{purchaseOrder}', [PurchaseOrderController::class, 'update'])
+            Route::get('/', [PurchaseOrderController::class, 'index'])->middleware('permission:maintenances.view');
+            Route::post('/', [PurchaseOrderController::class, 'store'])->middleware('permission:maintenances.create');
+            Route::get('{purchaseOrder}', [PurchaseOrderController::class, 'show'])->middleware('permission:maintenances.view');
+            Route::put('{purchaseOrder}/payment-condition', [PurchaseOrderController::class, 'updatePaymentCondition'])
                 ->middleware('permission:maintenances.edit');
-            Route::post('{purchaseOrder}/close', [PurchaseOrderController::class, 'close'])
-                ->middleware('permission:maintenance_new.close_purchase_order');
         });
 
+    });
+
+    Route::prefix('treasury/purchase-orders')->group(function () {
+        Route::get('/', [PurchaseOrderController::class, 'treasuryIndex'])
+            ->middleware('permission:treasury.view_purchase_orders');
+        Route::get('{purchaseOrder}', [PurchaseOrderController::class, 'treasuryShow'])
+            ->middleware('permission:treasury.view_purchase_orders');
+        Route::post('{purchaseOrder}/accept', [PurchaseOrderController::class, 'acceptForTreasury'])
+            ->middleware('permission:treasury.accept_purchase_orders');
     });
 
     // Tesorería

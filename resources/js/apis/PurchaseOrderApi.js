@@ -20,14 +20,26 @@ export async function createPurchaseOrderApi(data) {
     return response.data;
 }
 
-export async function updatePurchaseOrderApi(id, data) {
-    const response = await axios.post(`${endpoint}/${id}`, data);
+export async function updatePurchaseOrderPaymentConditionApi(id, data) {
+    const response = await axios.put(`${endpoint}/${id}/payment-condition`, data);
 
     return response.data;
 }
 
-export async function closePurchaseOrderApi(id) {
-    const response = await axios.post(`${endpoint}/${id}/close`);
+export async function getTreasuryPurchaseOrdersApi(filters = {}) {
+    const response = await axios.get('treasury/purchase-orders', { params: filters });
+
+    return response.data;
+}
+
+export async function getTreasuryPurchaseOrderDetailApi(id) {
+    const response = await axios.get(`treasury/purchase-orders/${id}`);
+
+    return response.data;
+}
+
+export async function acceptTreasuryPurchaseOrderApi(id) {
+    const response = await axios.post(`treasury/purchase-orders/${id}/accept`);
 
     return response.data;
 }

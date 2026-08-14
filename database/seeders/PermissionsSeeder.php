@@ -60,11 +60,6 @@ class PermissionsSeeder extends Seeder
             'maintenances.change_state',
             'maintenances.upload_evidence',
 
-            //Nuevo modulo de mantenimiento
-            'maintenance_new.start_work_order',
-            'maintenance_new.close_work_order',
-            'maintenance_new.close_purchase_order',
-            
             // Inventarios
             'inventories.view',
             'inventories.create',
@@ -105,6 +100,8 @@ class PermissionsSeeder extends Seeder
             'treasury.upload_evidence',
             'treasury.init_expenses',
             'treasury.ext_expenses',
+            'treasury.view_purchase_orders',
+            'treasury.accept_purchase_orders',
             
             // Aprobaciones
             'approvals.view',
@@ -131,6 +128,16 @@ class PermissionsSeeder extends Seeder
             'diesel_costs.create',
             'diesel_costs.edit',
         ];
+
+        Permission::whereIn('name', [
+            'maintenance_new.view',
+            'maintenance_new.create_work_order',
+            'maintenance_new.edit_work_order',
+            'maintenance_new.start_work_order',
+            'maintenance_new.close_work_order',
+            'maintenance_new.create_purchase_order',
+            'maintenance_new.edit_purchase_order',
+        ])->delete();
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);

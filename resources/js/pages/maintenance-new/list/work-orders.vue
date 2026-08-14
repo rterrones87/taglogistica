@@ -6,6 +6,7 @@
             <h2 class="grow text-3xl font-bold">Ordenes de trabajo</h2>
 
             <router-link
+                v-if="hasPermission('maintenances.create')"
                 to="/panel/maintenance-new/work-orders/new"
                 class="rounded bg-[#18364a] px-4 py-2 text-center text-white"
             >
@@ -35,6 +36,7 @@ import { getWorkOrdersApi } from '../../../apis/OrderWorkApi';
 import breadcrumb from '../../../components/breadcrumb.vue';
 import DataTable from '../../../components/DataTable.vue';
 import TableAction from '../../../components/TableAction.vue';
+import { usePermissions } from '../../../composables/usePermissions';
 
 const breadcrumbItems = [
     { title: 'Mantenimientos' },
@@ -42,6 +44,7 @@ const breadcrumbItems = [
 ];
 
 const items = ref([]);
+const { hasPermission } = usePermissions();
 
 const columns = [
     { key: 'folio', label: 'Folio', sortable: true, filterable: true },
@@ -57,10 +60,10 @@ const columns = [
     },
     { key: 'status', label: 'Estado', sortable: true, filterable: true },
     { key: 'mechanic.name', label: 'Mecanico', sortable: true, filterable: true },
-    { key: 'purchase_orders_count', label: 'OC vinculadas', sortable: true },
+    { key: 'purchase_orders_count', label: 'OC aprobadas', sortable: true },
     {
         key: 'total_cost',
-        label: 'Costo total',
+        label: 'Costo aprobado',
         sortable: true,
         formatter: (value) => Number(value || 0).toLocaleString('es-MX', {
             style: 'currency',

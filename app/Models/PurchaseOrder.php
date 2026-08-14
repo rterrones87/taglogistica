@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use App\Support\GeneratesAnnualFolio;
+use App\Traits\HasApproval;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class PurchaseOrder extends Model
 {
+    use HasApproval;
+
     protected $fillable = [
         'folio',
         'work_order_id',
@@ -22,18 +25,18 @@ class PurchaseOrder extends Model
         'evidence_path',
         'status',
         'created_by',
-        'closed_by',
-        'closed_at'
+        'treasury_accepted_by',
+        'treasury_accepted_at'
     ];
     
     protected $casts = [
         'cost' => 'decimal:2',
-        'closed_at' => 'datetime'
+        'treasury_accepted_at' => 'datetime'
     ];
 
     public static function searchList(array $filters)
     {
-        $query = self::query()->with(['workOrder.unit', 'supplier:id,name'])->latest('id');
+        $query = self::query()->with(self::detailRelations())->latest('id');
 
         if (!empty($filters['work_order_id'])) {
             $query->where('work_order_id', $filters['work_order_id']);
@@ -48,45 +51,93 @@ class PurchaseOrder extends Model
 
     public static function createRegister(array $data, array $files = []): self
     {
-        $data['folio'] = GeneratesAnnualFolio::for(self::class, 'OC');
-        $data = self::storeFiles($data, $files);
+        return DB::transaction(function () use ($data, $files) {
+            $workOrder = WorkOrder::query()->lockForUpdate()->findOrFail($data['work_order_id']);
 
-        return self::create($data)->load(['workOrder.unit', 'supplier:id,name']);
+            if ($workOrder->status !== 'En Proceso') {
+                throw new UnprocessableEntityHttpException('Solo se pueden crear ordenes de compra para una OT En Proceso.');
+            }
+
+            $data['folio'] = GeneratesAnnualFolio::for(self::class, 'OC');
+            $data['status'] = 'Pendiente';
+            $data = self::storeFiles($data, $files);
+
+            $order = self::create($data);
+            $order->requestApproval('purchase_order', $data['created_by'], [
+                'Folio OC' => $order->folio,
+                'Folio OT' => $workOrder->folio,
+                'Costo' => number_format((float) $order->cost, 2, '.', ','),
+                'Descripcion' => $order->description,
+            ]);
+
+            return $order->load(self::detailRelations());
+        });
     }
 
     public function detail(): self
     {
-        return $this->load(['workOrder.unit', 'supplier:id,name', 'closedBy:id,name']);
+        return $this->load(self::detailRelations());
     }
 
-    public function updateRegister(array $data, array $files = []): self
+    public function updatePaymentCondition(array $data): self
     {
-        if ($this->status === 'Cerrada') {
-            throw new UnprocessableEntityHttpException('Una orden cerrada no puede editarse.');
-        }
+        $this->update([
+            'payment_condition' => $data['payment_condition'] ?? null,
+            'credit_days' => ($data['payment_condition'] ?? null) === 'Credito'
+                ? $data['credit_days']
+                : null,
+        ]);
 
-        $data = self::storeFiles($data, $files, $this);
-        $this->update($data);
-
-        return $this->fresh()->load(['workOrder.unit', 'supplier:id,name', 'closedBy:id,name']);
+        return $this->fresh()->load(self::detailRelations());
     }
 
-    public function closeOrder(int $userId): self
+    public function onApproved(Approval $approval): void
     {
-        if ($this->status === 'Cerrada') {
-            throw new UnprocessableEntityHttpException('La orden de compra ya se encuentra cerrada.');
+        if ($approval->kind === 'purchase_order') {
+            $this->update(['status' => 'Aprobada']);
         }
-
-        if (!$this->quotation_path || !$this->evidence_path) {
-            throw new UnprocessableEntityHttpException('Para cerrar la OC debe adjuntar cotizacion y evidencia.');
-        }
-
-        $this->update(['status' => 'Cerrada', 'closed_by' => $userId, 'closed_at' => now()]);
-
-        return $this->fresh()->load(['workOrder.unit', 'supplier:id,name', 'closedBy:id,name']);
     }
 
-    private static function storeFiles(array $data, array $files, ?self $current = null): array
+    public function onRejected(Approval $approval): void
+    {
+        if ($approval->kind === 'purchase_order') {
+            $this->update(['status' => 'Rechazada']);
+        }
+    }
+
+    public static function searchTreasuryList(array $filters = [])
+    {
+        $query = self::query()
+            ->with(self::detailRelations())
+            ->where('status', 'Aprobada')
+            ->latest('id');
+
+        if (array_key_exists('accepted', $filters) && $filters['accepted'] !== null) {
+            $filters['accepted']
+                ? $query->whereNotNull('treasury_accepted_at')
+                : $query->whereNull('treasury_accepted_at');
+        }
+
+        return $query->get();
+    }
+
+    public function acceptForTreasury(int $userId): self
+    {
+        if ($this->status !== 'Aprobada') {
+            throw new UnprocessableEntityHttpException('Tesoreria solo puede aceptar ordenes de compra aprobadas.');
+        }
+
+        if (!$this->treasury_accepted_at) {
+            $this->update([
+                'treasury_accepted_by' => $userId,
+                'treasury_accepted_at' => now(),
+            ]);
+        }
+
+        return $this->fresh()->load(self::detailRelations());
+    }
+
+    private static function storeFiles(array $data, array $files): array
     {
         $definitions = [
             'quotation' => ['column' => 'quotation_path', 'folder' => 'maintenance/quotations'],
@@ -98,10 +149,6 @@ class PurchaseOrder extends Model
 
             if (!$file instanceof UploadedFile) {
                 continue;
-            }
-
-            if ($current && $current->{$definition['column']}) {
-                Storage::disk('public')->delete($current->{$definition['column']});
             }
 
             $data[$definition['column']] = $file->store($definition['folder'], 'public');
@@ -122,8 +169,19 @@ class PurchaseOrder extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-    public function closedBy()
+    public function treasuryAcceptedBy()
     {
-        return $this->belongsTo(User::class, 'closed_by');
+        return $this->belongsTo(User::class, 'treasury_accepted_by');
+    }
+
+    private static function detailRelations(): array
+    {
+        return [
+            'workOrder.unit',
+            'supplier:id,name',
+            'creator:id,name',
+            'treasuryAcceptedBy:id,name',
+            'approvals',
+        ];
     }
 }

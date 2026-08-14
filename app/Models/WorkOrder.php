@@ -38,8 +38,12 @@ class WorkOrder extends Model
     {
         $query = self::query()
             ->with(['unit', 'operator:id,name', 'mechanic:id,name', 'supplier:id,name'])
-            ->withCount('purchaseOrders')
-            ->withSum('purchaseOrders', 'cost')
+            ->withCount([
+                'purchaseOrders as purchase_orders_count' => fn($query) => $query->where('status', 'Aprobada'),
+            ])
+            ->withSum([
+                'purchaseOrders as purchase_orders_sum_cost' => fn($query) => $query->where('status', 'Aprobada'),
+            ], 'cost')
             ->latest('id');
 
         if (!empty($filters['status'])) {
@@ -66,6 +70,7 @@ class WorkOrder extends Model
     public static function createRegister(array $data): self
     {
         return DB::transaction(function () use ($data) {
+            $data['mechanic_id'] = $data['work_type'] === 'Externo' ? null : ($data['mechanic_id'] ?? null);
             $data['folio'] = GeneratesAnnualFolio::for(self::class, 'OT');
             $order = self::create($data);
 
@@ -84,6 +89,7 @@ class WorkOrder extends Model
             throw new UnprocessableEntityHttpException('Una orden cerrada no puede editarse.');
         }
 
+        $data['mechanic_id'] = $data['work_type'] === 'Externo' ? null : ($data['mechanic_id'] ?? null);
         $this->update($data);
 
         return $this->fresh()->load(self::detailRelations());
@@ -102,13 +108,21 @@ class WorkOrder extends Model
 
     public function closeOrder(int $userId): self
     {
-        if ($this->status !== 'En Proceso') {
-            throw new UnprocessableEntityHttpException('La orden debe estar En Proceso para cerrarse.');
-        }
+        return DB::transaction(function () use ($userId) {
+            $order = self::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
 
-        $this->update(['status' => 'Cerrado', 'closed_by' => $userId, 'closed_at' => now()]);
+            if ($order->status !== 'En Proceso') {
+                throw new UnprocessableEntityHttpException('La orden debe estar En Proceso para finalizarse.');
+            }
 
-        return $this->fresh()->load(self::detailRelations());
+            if ($order->purchaseOrders()->where('status', 'Pendiente')->exists()) {
+                throw new UnprocessableEntityHttpException('No se puede finalizar la OT mientras tenga ordenes de compra pendientes.');
+            }
+
+            $order->update(['status' => 'Cerrado', 'closed_by' => $userId, 'closed_at' => now()]);
+
+            return $order->fresh()->load(self::detailRelations());
+        });
     }
 
     private static function detailRelations(): array

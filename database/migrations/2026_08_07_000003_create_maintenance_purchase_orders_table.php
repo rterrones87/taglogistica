@@ -19,10 +19,10 @@ return new class extends Migration
             $table->unsignedSmallInteger('credit_days')->nullable();
             $table->string('quotation_path')->nullable();
             $table->string('evidence_path')->nullable();
-            $table->enum('status', ['Abierta', 'Cerrada'])->default('Abierta');
+            $table->enum('status', ['Pendiente', 'Aprobada', 'Rechazada'])->default('Pendiente');
             $table->foreignId('created_by')->constrained('users');
-            $table->foreignId('closed_by')->nullable()->constrained('users');
-            $table->timestamp('closed_at')->nullable();
+            $table->foreignId('treasury_accepted_by')->nullable()->constrained('users');
+            $table->timestamp('treasury_accepted_at')->nullable();
             $table->timestamps();
 
             $table->index(['work_order_id', 'status']);

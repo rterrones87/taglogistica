@@ -24,7 +24,7 @@ class WorkshopCatalogController extends Controller
                 'operators' => User::searchList(['role_id' => 8, 'columns' => ['id', 'name']]),
                 'mechanics' => User::searchList(['role_id' => 11, 'columns' => ['id', 'name']]),
                 'suppliers' => Supplier::searchList(['columns' => ['id', 'name']]),
-                'work_orders' => WorkOrder::searchList(['only_open' => true]),
+                'work_orders' => WorkOrder::searchList(['status' => 'En Proceso']),
             ];
 
             return response()->json($catalogs);

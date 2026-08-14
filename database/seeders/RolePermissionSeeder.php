@@ -89,30 +89,79 @@ class RolePermissionSeeder extends Seeder
         // Mantenimiento (role_id=5)
         $mantenimiento->permissions()->sync(
             Permission::whereIn('name', [
+                // 'maintenances.view',
+                // 'units.view',
+                // 'inventories.view',
+                // 'suppliers.view',
+                // 'tires.view',
+                // 'services.view',
+
+                'maintenances.view',
+                'maintenances.create',
+                // 'maintenances.edit',
+                // 'maintenances.delete',
+                // 'maintenances.change_state',
+                // 'maintenances.upload_evidence',
+
+                'units.view',
+                // 'units.create',
+                // 'units.edit',
+                // 'units.delete',
+
+                'inventories.view',
+                'inventories.create',
+                'inventories.edit',
+                'inventories.delete',
+
+                'suppliers.view',
+                // 'suppliers.create',
+                // 'suppliers.edit',
+                // 'suppliers.delete',
+
+                'tires.view',
+                'tires.create',
+                'tires.edit',
+                'tires.delete',
+
+                'services.view',
+                'services.request_diesel',
+                
+            ])->pluck('id')->toArray()
+        );
+
+        // Gerente Mantenimiento (role_id=13)
+        $gerenteMantenimiento->permissions()->sync(
+            Permission::whereIn('name', [
                 'maintenances.view',
                 'maintenances.create',
                 'maintenances.edit',
                 'maintenances.delete',
                 'maintenances.change_state',
                 'maintenances.upload_evidence',
+
                 'units.view',
                 'units.create',
                 'units.edit',
                 'units.delete',
-                'inventories.view',
-                'inventories.create',
-                'inventories.edit',
-                'inventories.delete',
+
                 'suppliers.view',
                 'suppliers.create',
                 'suppliers.edit',
                 'suppliers.delete',
+
+                'inventories.view',
+                'inventories.create',
+                'inventories.edit',
+                'inventories.delete',
+
                 'tires.view',
                 'tires.create',
                 'tires.edit',
                 'tires.delete',
+
                 'services.view',
                 'services.request_diesel',
+                
             ])->pluck('id')->toArray()
         );
 
@@ -126,6 +175,8 @@ class RolePermissionSeeder extends Seeder
                 'treasury.upload_evidence',
                 'treasury.init_expenses',
                 'treasury.ext_expenses',
+                'treasury.view_purchase_orders',
+                'treasury.accept_purchase_orders',
             ])->pluck('id')->toArray()
         );
 
@@ -140,16 +191,7 @@ class RolePermissionSeeder extends Seeder
             ])->pluck('id')->toArray()
         );
 
-        $gerenteMantenimiento->permissions()->sync(
-            Permission::whereIn('name', [
-                'maintenances.view',
-                'maintenances.create',
-                'maintenances.edit',
-                'maintenance_new.start_work_order',
-                'maintenance_new.close_work_order',
-                'maintenance_new.close_purchase_order',
-            ])->pluck('id')->toArray()
-        );
+
 
         // Chofer (role_id=8)
         $chofer->permissions()->sync(

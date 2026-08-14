@@ -28,7 +28,7 @@ class WorkOrderResource extends JsonResource
             'status' => $this->status,
             'purchase_orders' => PurchaseOrderResource::collection($this->whenLoaded('purchaseOrders')),
             'purchase_orders_count' => $this->when(isset($this->purchase_orders_count), $this->purchase_orders_count),
-            'total_cost' => (float) ($this->purchase_orders_sum_cost ?? $this->purchaseOrders->sum('cost')),
+            'total_cost' => (float) ($this->purchase_orders_sum_cost ?? $this->purchaseOrders->where('status', 'Aprobada')->sum('cost')),
             'created_by' => $this->created_by,
             'creator' => $this->whenLoaded('creator'),
             'started_by' => $this->started_by,

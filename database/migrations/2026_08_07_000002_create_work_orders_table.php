@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedInteger('initial_mileage');
             $table->date('opened_at');
             $table->foreignId('operator_id')->constrained('users');
-            $table->foreignId('mechanic_id')->constrained('users');
+            $table->foreignId('mechanic_id')->nullable()->constrained('users');
             $table->text('failure_description');
             $table->enum('work_type', ['Interno', 'Externo']);
             $table->foreignId('supplier_id')->nullable()->constrained('suppliers');

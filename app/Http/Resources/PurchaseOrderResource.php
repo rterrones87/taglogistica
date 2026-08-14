@@ -24,9 +24,11 @@ class PurchaseOrderResource extends JsonResource
             'evidence_url' => $this->evidence_path ? Storage::url($this->evidence_path) : null,
             'status' => $this->status,
             'created_by' => $this->created_by,
-            'closed_by' => $this->closed_by,
-            'closed_by_user' => $this->whenLoaded('closedBy'),
-            'closed_at' => $this->closed_at,
+            'creator' => $this->whenLoaded('creator'),
+            'approvals_map' => $this->approvals_map,
+            'treasury_accepted_by' => $this->treasury_accepted_by,
+            'treasury_accepted_by_user' => $this->whenLoaded('treasuryAcceptedBy'),
+            'treasury_accepted_at' => $this->treasury_accepted_at,
             'created_at' => $this->created_at,
         ];
     }

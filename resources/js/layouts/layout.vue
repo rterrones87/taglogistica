@@ -171,7 +171,6 @@ const rawMenuItems = [
     requiresAnyPermission: ['maintenances.view'],
     subMenu: [
       { name: "Ordenes de trabajo", path: "/panel/maintenance-new/work-orders", requiresPermission: 'maintenances.view' },
-      { name: "Ordenes de compra", path: "/panel/maintenance-new/purchase-orders", requiresPermission: 'maintenances.view' },
       { name: "Proveedores", path: "/panel/suppliers", requiresPermission: 'suppliers.view'},
       { name: "Unidades", path: "/panel/units", requiresPermission: 'units.view'},
     ]
@@ -179,7 +178,7 @@ const rawMenuItems = [
   { 
     icon: "money", 
     name: "Tesorería", 
-    requiresAnyPermission: ['treasury.view_services', 'treasury.view_maintenances', 'treasury.view_payments'],
+    requiresAnyPermission: ['treasury.view_services', 'treasury.view_maintenances', 'treasury.view_purchase_orders', 'treasury.view_payments'],
     subMenu: [
       { 
         name: "Viajes", 
@@ -190,6 +189,11 @@ const rawMenuItems = [
         name: "Mantenimientos", 
         path: "/panel/treasury/maintenances",
         requiresPermission: 'treasury.view_maintenances'
+      },
+      {
+        name: "Ordenes de compra",
+        path: "/panel/treasury/purchase-orders",
+        requiresPermission: 'treasury.view_purchase_orders'
       },
       { 
         name: "Nóminas", 

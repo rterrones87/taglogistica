@@ -14,8 +14,8 @@
 
         <form class="space-y-6" @submit.prevent="save">
             <fieldset
-                :disabled="isEditing && item.status === 'Cerrado'"
-                class="space-y-6 disabled:opacity-70"
+                
+                class="space-y-6 "
             >
                 <section>
                     <h3 class="mb-3 text-xl font-bold">Clasificacion</h3>
@@ -79,6 +79,18 @@
                         </div>
 
                         <div class="form-item">
+                            <label>Tipo de trabajo *</label>
+
+                            <select v-model="item.work_type" required>
+                                <option value="">Seleccione</option>
+                                <option>Interno</option>
+                                <option>Externo</option>
+                            </select>
+
+                            <ErrorText :errors="errors.work_type" />
+                        </div>
+
+                        <div class="form-item">
                             <label>Nombre del operador *</label>
 
                             <select v-model="item.operator_id" required>
@@ -91,7 +103,7 @@
                             <ErrorText :errors="errors.operator_id" />
                         </div>
 
-                        <div class="form-item">
+                        <div v-if="item.work_type !== 'Externo'" class="form-item">
                             <label>Mecanico responsable *</label>
 
                             <select v-model="item.mechanic_id" required>
@@ -104,17 +116,7 @@
                             <ErrorText :errors="errors.mechanic_id" />
                         </div>
 
-                        <div class="form-item">
-                            <label>Tipo de trabajo *</label>
 
-                            <select v-model="item.work_type" required>
-                                <option value="">Seleccione</option>
-                                <option>Interno</option>
-                                <option>Externo</option>
-                            </select>
-
-                            <ErrorText :errors="errors.work_type" />
-                        </div>
 
                         <div v-if="item.work_type === 'Externo'" class="form-item">
                             <label>Proveedor *</label>
@@ -141,19 +143,22 @@
                     </div>
                 </section>
 
-                <section v-if="isEditing && item.purchase_orders?.length" class="border-t pt-4">
-                    <h3 class="mb-3 text-xl font-bold">Ordenes de compra vinculadas</h3>
+                <section v-if="isEditing" class="border-t pt-4">
+                    <h3 class="mb-3 text-xl font-bold">Ordenes de compra</h3>
 
-                    <div
-                        v-for="purchaseOrder in item.purchase_orders"
-                        :key="purchaseOrder.id"
-                        class="flex justify-between border-b py-2"
+                    <DataTable
+                        :data="item.purchase_orders || []"
+                        :columns="purchaseOrderColumns"
+                        emptyMessage="Esta orden de trabajo no tiene ordenes de compra."
                     >
-                        <span>
-                            {{ purchaseOrder.folio }} - {{ purchaseOrder.supplier?.name }} ({{ purchaseOrder.status }})
-                        </span>
-                        <strong>{{ formatCurrency(purchaseOrder.cost) }}</strong>
-                    </div>
+                        <template #actions="{ row }">
+                            <TableAction
+                                title="Ver detalle"
+                                icon="info.png"
+                                :route="`/panel/maintenance-new/purchase-orders/${row.id}`"
+                            />
+                        </template>
+                    </DataTable>
                 </section>
             </fieldset>
 
@@ -172,7 +177,7 @@
                 </router-link>
 
                 <router-link
-                    v-if="isEditing && item.status !== 'Cerrado'"
+                    v-if="isEditing && item.status === 'En Proceso' && hasPermission('maintenances.create')"
                     :to="`/panel/maintenance-new/purchase-orders/new?work_order_id=${item.id}`"
                     class="rounded border border-[#18364a] px-4 py-2 text-[#18364a]"
                 >
@@ -180,7 +185,7 @@
                 </router-link>
 
                 <button
-                    v-if="isEditing && item.status === 'Abierto' && hasPermission('maintenance_new.start_work_order')"
+                    v-if="isEditing && item.status === 'Abierto' && hasPermission('maintenances.change_state')"
                     type="button"
                     class="rounded bg-amber-600 px-4 py-2 text-white"
                     @click="changeState('start')"
@@ -189,16 +194,16 @@
                 </button>
 
                 <button
-                    v-if="isEditing && item.status === 'En Proceso' && hasPermission('maintenance_new.close_work_order')"
+                    v-if="canFinishWorkOrder"
                     type="button"
                     class="rounded bg-red-700 px-4 py-2 text-white"
                     @click="changeState('close')"
                 >
-                    Cerrar OT
+                    Finalizar
                 </button>
 
                 <button
-                    v-if="!isEditing || item.status !== 'Cerrado'"
+                    v-if="canSave"
                     type="submit"
                     class="rounded bg-[#18364a] px-4 py-2 text-white"
                 >
@@ -221,6 +226,8 @@ import {
     updateWorkOrderApi,
 } from '../../../apis/OrderWorkApi';
 import breadcrumb from '../../../components/breadcrumb.vue';
+import DataTable from '../../../components/DataTable.vue';
+import TableAction from '../../../components/TableAction.vue';
 import { usePermissions } from '../../../composables/usePermissions';
 
 const ErrorText = defineComponent({
@@ -235,6 +242,10 @@ const router = useRouter();
 const dialogs = inject('swal');
 const { hasPermission } = usePermissions();
 const isEditing = computed(() => route.params.id && route.params.id !== 'new');
+const canSave = computed(() => isEditing.value
+    ? item.status !== 'Cerrado' && hasPermission('maintenances.edit')
+    : hasPermission('maintenances.create'));
+const formDisabled = computed(() => !canSave.value);
 
 const breadcrumbItems = computed(() => [
     { title: 'Ordenes de trabajo', path: '/panel/maintenance-new/work-orders' },
@@ -268,6 +279,22 @@ const catalogs = reactive({
 });
 const errors = ref({});
 const vehicleCategory = computed(() => vehicleCategories.includes(item.unit_category));
+const canFinishWorkOrder = computed(() => isEditing.value
+    && item.status === 'En Proceso'
+    && !(item.purchase_orders || []).some((purchaseOrder) => purchaseOrder.status === 'Pendiente')
+    && hasPermission('maintenances.change_state'));
+const purchaseOrderColumns = [
+    { key: 'folio', label: 'OC', sortable: true, filterable: true },
+    { key: 'supplier.name', label: 'Proveedor', filterable: true },
+    { key: 'description', label: 'Descripcion', filterable: true },
+    {
+        key: 'cost',
+        label: 'Costo',
+        sortable: true,
+        formatter: (value) => formatCurrency(value),
+    },
+    { key: 'status', label: 'Estado', sortable: true, filterable: true },
+];
 
 onMounted(async () => {
     Object.assign(catalogs, await getWorkshopCatalogsApi());
@@ -282,6 +309,7 @@ async function save() {
     try {
         errors.value = {};
         if (item.work_type !== 'Externo') item.supplier_id = null;
+        if (item.work_type === 'Externo') item.mechanic_id = null;
         if (!vehicleCategory.value) item.maintenance_type = null;
 
         if (isEditing.value) {
@@ -299,7 +327,7 @@ async function save() {
 }
 
 async function changeState(action) {
-    const label = action === 'start' ? 'iniciar el trabajo' : 'cerrar la orden';
+    const label = action === 'start' ? 'iniciar el trabajo' : 'finalizar la orden';
     const result = await dialogs.fire({
         title: `¿Desea ${label}?`,
         icon: 'warning',
