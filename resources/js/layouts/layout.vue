@@ -172,6 +172,8 @@ const rawMenuItems = [
     subMenu: [
       { name: "Ordenes de trabajo", path: "/panel/maintenance-new/work-orders", requiresPermission: 'maintenances.view' },
       { name: "Ordenes de compra", path: "/panel/maintenance-new/purchase-orders", requiresPermission: 'maintenances.view' },
+      { name: "Proveedores", path: "/panel/suppliers", requiresPermission: 'suppliers.view'},
+      { name: "Unidades", path: "/panel/units", requiresPermission: 'units.view'},
     ]
   },
   { 

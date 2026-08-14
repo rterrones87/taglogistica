@@ -114,7 +114,7 @@ const routes = [
             { path: 'operators', component: Operators, meta: { requiresPermission: 'operators.view' } },
             { path: 'booths', component: Booths, meta: { requiresPermission: 'booths.view' } },
             { path: 'places', component: Places, meta: { requiresPermission: 'places.view' } },
-            { path: 'maintenances', component: Maintenances, meta: { requiresPermission: 'maintenances.view' } },
+            //{ path: 'maintenances', component: Maintenances, meta: { requiresPermission: 'maintenances.view' } },
             { path: 'approvals', component: Approvals, meta: { requiresPermission: 'approvals.view' } },
             { path: 'client/:id?', component: Client, meta: { requiresPermission: ['clients.view', 'clients.create', 'clients.edit'] } },
             { 
@@ -145,7 +145,7 @@ const routes = [
             { path: 'booth/:id?', component: Booth, meta: { requiresPermission: ['booths.view', 'booths.create', 'booths.edit'] } },
             { path: 'cost/:id?', component: Cost, meta: { requiresPermission: ['costs.view', 'costs.edit'] } },
             { path: 'extras/:id?', component: Extras, meta: { requiresPermission: ['expenses.view', 'expenses.edit'] } },
-            { path: 'maintenance/:id?', component: Maintenance, meta: { requiresPermission: ['maintenances.view', 'maintenances.create', 'maintenances.edit'] } },
+            //{ path: 'maintenance/:id?', component: Maintenance, meta: { requiresPermission: ['maintenances.view', 'maintenances.create', 'maintenances.edit'] } },
             { path: 'treasury/services', component: TreasuryServices, meta: { requiresPermission: 'treasury.view_services' } },
             { path: 'treasury/maintenances', component: TreasuryMaintenances, meta: { requiresPermission: 'treasury.view_maintenances' } },
             { path: 'treasury/nominas', component: TreasuryNominas, meta: { requiresPermission: 'treasury.view_payments' } },
