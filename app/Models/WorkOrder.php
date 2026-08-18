@@ -126,7 +126,7 @@ class WorkOrder extends Model
 
     private static function detailRelations(): array
     {
-        return ['unit', 'operator:id,name', 'mechanic:id,name', 'creator:id,name', 'startedBy:id,name', 'closedBy:id,name'];
+        return ['unit', 'operator:id,name', 'mechanic:id,name', 'creator:id,name', 'startedBy:id,name', 'closedBy:id,name','purchaseOrders'];
     }
 
     public function unit()
