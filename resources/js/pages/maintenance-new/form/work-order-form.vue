@@ -230,7 +230,7 @@ const dialogs = inject('swal');
 const { hasPermission } = usePermissions();
 const isEditing = computed(() => route.params.id && route.params.id !== 'new');
 const canSave = computed(() => isEditing.value
-    ? item.status !== 'Cerrado' && hasPermission('maintenances.edit')
+    ? item.status !== 'Finalizado' && hasPermission('maintenances.edit')
     : hasPermission('maintenances.create'));
 const formDisabled = computed(() => !canSave.value);
 

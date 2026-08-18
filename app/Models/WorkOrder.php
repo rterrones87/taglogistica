@@ -60,7 +60,7 @@ class WorkOrder extends Model
         }
 
         if (!empty($filters['only_open'])) {
-            $query->where('status', '!=', 'Cerrado');
+            $query->where('status', '!=', 'Finalizado');
         }
 
         return $query->get();
@@ -84,7 +84,7 @@ class WorkOrder extends Model
 
     public function updateRegister(array $data): self
     {
-        if ($this->status === 'Cerrado') {
+        if ($this->status === 'Finalizado') {
             throw new UnprocessableEntityHttpException('Una orden cerrada no puede editarse.');
         }
 
@@ -118,7 +118,7 @@ class WorkOrder extends Model
                 throw new UnprocessableEntityHttpException('No se puede finalizar la OT mientras tenga ordenes de compra pendientes.');
             }
 
-            $order->update(['status' => 'Cerrado', 'closed_by' => $userId, 'closed_at' => now()]);
+            $order->update(['status' => 'Finalizado', 'closed_by' => $userId, 'closed_at' => now()]);
 
             return $order->fresh()->load(self::detailRelations());
         });
