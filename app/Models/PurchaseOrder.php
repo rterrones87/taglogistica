@@ -7,7 +7,9 @@ use App\Traits\HasApproval;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Throwable;
 
 class PurchaseOrder extends Model
 {
@@ -21,28 +23,26 @@ class PurchaseOrder extends Model
         'cost',
         'payment_condition',
         'credit_days',
-        'quotation_path',
-        'evidence_path',
         'status',
         'created_by',
         'treasury_accepted_by',
-        'treasury_accepted_at'
+        'treasury_accepted_at',
     ];
-    
+
     protected $casts = [
         'cost' => 'decimal:2',
-        'treasury_accepted_at' => 'datetime'
+        'treasury_accepted_at' => 'datetime',
     ];
 
     public static function searchList(array $filters)
     {
         $query = self::query()->with(self::detailRelations())->latest('id');
 
-        if (!empty($filters['work_order_id'])) {
+        if (! empty($filters['work_order_id'])) {
             $query->where('work_order_id', $filters['work_order_id']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
@@ -60,17 +60,15 @@ class PurchaseOrder extends Model
 
             $data['folio'] = GeneratesAnnualFolio::for(self::class, 'OC');
             $data['status'] = 'Pendiente';
-            $data = self::storeFiles($data, $files);
-
             $order = self::create($data);
             $order->requestApproval('purchase_order', $data['created_by'], [
                 'Folio OC' => $order->folio,
                 'Folio OT' => $workOrder->folio,
-                'Costo' => number_format((float) $order->cost, 2, '.', ','),
+                'Costo con IVA' => number_format((float) $order->cost, 2, '.', ','),
                 'Descripcion' => $order->description,
             ]);
 
-            return $order->load(self::detailRelations());
+            return $order->addFiles($files);
         });
     }
 
@@ -79,16 +77,89 @@ class PurchaseOrder extends Model
         return $this->load(self::detailRelations());
     }
 
-    public function updatePaymentCondition(array $data): self
+    public function updateRegister(array $data, array $files = [], array $deletedFileIds = []): self
     {
-        $this->update([
-            'payment_condition' => $data['payment_condition'] ?? null,
-            'credit_days' => ($data['payment_condition'] ?? null) === 'Credito'
-                ? $data['credit_days']
-                : null,
-        ]);
+        $storedFiles = [];
+        $deletedFiles = [];
 
-        return $this->fresh()->load(self::detailRelations());
+        try {
+            $order = DB::transaction(function () use ($data, $files, $deletedFileIds, &$storedFiles, &$deletedFiles) {
+                $order = self::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+                $order->load('files');
+
+                $deletedFileIds = array_values(array_unique(array_map('intval', $deletedFileIds)));
+                $filesToDelete = $order->files->whereIn('id', $deletedFileIds);
+
+                if ($filesToDelete->count() !== count($deletedFileIds)) {
+                    throw new UnprocessableEntityHttpException('Uno de los archivos no pertenece a la orden de compra.');
+                }
+
+                $remainingFiles = $order->files->whereNotIn('id', $deletedFileIds);
+                $quotation = $files['quotation'] ?? null;
+                $evidences = array_values($files['evidences'] ?? []);
+
+                if ($quotation instanceof UploadedFile && $remainingFiles->where('type', FilePurchaseOrder::TYPE_QUOTATION)->isNotEmpty()) {
+                    throw new UnprocessableEntityHttpException('La orden de compra ya tiene una cotizacion.');
+                }
+
+                if ($remainingFiles->where('type', FilePurchaseOrder::TYPE_EVIDENCE)->count() + count($evidences) > 5) {
+                    throw new UnprocessableEntityHttpException('La orden de compra admite un maximo de 5 evidencias.');
+                }
+
+                $order->update([
+                    'payment_condition' => $data['payment_condition'] ?? null,
+                    'credit_days' => ($data['payment_condition'] ?? null) === 'Credito'
+                        ? $data['credit_days']
+                        : null,
+                ]);
+
+                foreach ($filesToDelete as $fileToDelete) {
+                    $deletedFiles[] = [
+                        'disk' => FilePurchaseOrder::diskForType($fileToDelete->type),
+                        'name' => $fileToDelete->url,
+                    ];
+                    $fileToDelete->delete();
+                }
+
+                if ($quotation instanceof UploadedFile) {
+                    $filename = self::storeFile(
+                        $quotation,
+                        FilePurchaseOrder::TYPE_QUOTATION,
+                        $storedFiles
+                    );
+                    $order->files()->create([
+                        'type' => FilePurchaseOrder::TYPE_QUOTATION,
+                        'url' => $filename,
+                    ]);
+                }
+
+                foreach ($evidences as $evidence) {
+                    if (! $evidence instanceof UploadedFile) {
+                        continue;
+                    }
+
+                    $filename = self::storeFile(
+                        $evidence,
+                        FilePurchaseOrder::TYPE_EVIDENCE,
+                        $storedFiles
+                    );
+                    $order->files()->create([
+                        'type' => FilePurchaseOrder::TYPE_EVIDENCE,
+                        'url' => $filename,
+                    ]);
+                }
+
+                return $order->fresh()->load(self::detailRelations());
+            });
+        } catch (Throwable $exception) {
+            self::deleteFiles($storedFiles);
+
+            throw $exception;
+        }
+
+        self::deleteFiles($deletedFiles);
+
+        return $order;
     }
 
     public function onApproved(Approval $approval): void
@@ -127,7 +198,7 @@ class PurchaseOrder extends Model
             throw new UnprocessableEntityHttpException('Tesoreria solo puede aceptar ordenes de compra aprobadas.');
         }
 
-        if (!$this->treasury_accepted_at) {
+        if (! $this->treasury_accepted_at) {
             $this->update([
                 'treasury_accepted_by' => $userId,
                 'treasury_accepted_at' => now(),
@@ -137,38 +208,119 @@ class PurchaseOrder extends Model
         return $this->fresh()->load(self::detailRelations());
     }
 
-    private static function storeFiles(array $data, array $files): array
+    public function addFiles(array $files): self
     {
-        $definitions = [
-            'quotation' => ['column' => 'quotation_path', 'folder' => 'maintenance/quotations'],
-            'evidence' => ['column' => 'evidence_path', 'folder' => 'maintenance/evidence'],
-        ];
+        $storedFiles = [];
 
-        foreach ($definitions as $input => $definition) {
-            $file = $files[$input] ?? null;
+        try {
+            return DB::transaction(function () use ($files, &$storedFiles) {
+                $order = self::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+                $order->load('files');
 
-            if (!$file instanceof UploadedFile) {
-                continue;
-            }
+                $quotation = $files['quotation'] ?? null;
+                $evidences = array_values($files['evidences'] ?? []);
 
-            $data[$definition['column']] = $file->store($definition['folder'], 'public');
+                if ($quotation instanceof UploadedFile && $order->quotationFile) {
+                    throw new UnprocessableEntityHttpException('La orden de compra ya tiene una cotizacion.');
+                }
+
+                if ($order->evidenceFiles->count() + count($evidences) > 5) {
+                    throw new UnprocessableEntityHttpException('La orden de compra admite un maximo de 5 evidencias.');
+                }
+
+                if ($quotation instanceof UploadedFile) {
+                    $filename = self::storeFile(
+                        $quotation,
+                        FilePurchaseOrder::TYPE_QUOTATION,
+                        $storedFiles
+                    );
+                    $order->files()->create([
+                        'type' => FilePurchaseOrder::TYPE_QUOTATION,
+                        'url' => $filename,
+                    ]);
+                }
+
+                foreach ($evidences as $evidence) {
+                    if (! $evidence instanceof UploadedFile) {
+                        continue;
+                    }
+
+                    $filename = self::storeFile(
+                        $evidence,
+                        FilePurchaseOrder::TYPE_EVIDENCE,
+                        $storedFiles
+                    );
+                    $order->files()->create([
+                        'type' => FilePurchaseOrder::TYPE_EVIDENCE,
+                        'url' => $filename,
+                    ]);
+                }
+
+                return $order->fresh()->load(self::detailRelations());
+            });
+        } catch (Throwable $exception) {
+            self::deleteFiles($storedFiles);
+
+            throw $exception;
+        }
+    }
+
+    private static function storeFile(UploadedFile $file, int $type, array &$storedFiles): string
+    {
+        $disk = FilePurchaseOrder::diskForType($type);
+        $filename = $file->store('', $disk);
+
+        if (! is_string($filename)) {
+            throw new UnprocessableEntityHttpException('No fue posible guardar el archivo de la orden de compra.');
         }
 
-        return $data;
+        $storedFiles[] = [
+            'disk' => $disk,
+            'name' => $filename,
+        ];
+
+        return $filename;
+    }
+
+    private static function deleteFiles(array $files): void
+    {
+        foreach ($files as $file) {
+            Storage::disk($file['disk'])->delete($file['name']);
+        }
+    }
+
+    public function files()
+    {
+        return $this->hasMany(FilePurchaseOrder::class)->orderBy('type')->orderBy('id');
+    }
+
+    public function quotationFile()
+    {
+        return $this->hasOne(FilePurchaseOrder::class)
+            ->where('type', FilePurchaseOrder::TYPE_QUOTATION);
+    }
+
+    public function evidenceFiles()
+    {
+        return $this->hasMany(FilePurchaseOrder::class)
+            ->where('type', FilePurchaseOrder::TYPE_EVIDENCE);
     }
 
     public function workOrder()
     {
         return $this->belongsTo(WorkOrder::class, 'work_order_id');
     }
+
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
     }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
     public function treasuryAcceptedBy()
     {
         return $this->belongsTo(User::class, 'treasury_accepted_by');
@@ -182,6 +334,7 @@ class PurchaseOrder extends Model
             'creator:id,name',
             'treasuryAcceptedBy:id,name',
             'approvals',
+            'files',
         ];
     }
 }

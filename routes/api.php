@@ -197,7 +197,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/', [PurchaseOrderController::class, 'index'])->middleware('permission:maintenances.view');
             Route::post('/', [PurchaseOrderController::class, 'store'])->middleware('permission:maintenances.create');
             Route::get('{purchaseOrder}', [PurchaseOrderController::class, 'show'])->middleware('permission:maintenances.view');
-            Route::put('{purchaseOrder}/payment-condition', [PurchaseOrderController::class, 'updatePaymentCondition'])->middleware('permission:maintenances.edit');
+            Route::put('{purchaseOrder}', [PurchaseOrderController::class, 'update'])->middleware('permission:maintenances.edit');
         });
 
     });

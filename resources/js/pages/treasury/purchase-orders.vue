@@ -44,28 +44,29 @@
                 <p><strong>OT:</strong> {{ selectedOrder.work_order?.folio }}</p>
                 <p><strong>Unidad:</strong> {{ selectedOrder.work_order?.unit?.econame || 'N/A' }}</p>
                 <p><strong>Proveedor:</strong> {{ selectedOrder.supplier?.name || 'N/A' }}</p>
-                <p><strong>Costo:</strong> {{ formatCurrency(selectedOrder.cost) }}</p>
+                <p><strong>Costo con IVA:</strong> {{ formatCurrency(selectedOrder.cost) }}</p>
                 <p><strong>Condicion:</strong> {{ selectedOrder.payment_condition || 'Por confirmar' }}</p>
                 <p class="md:col-span-2"><strong>Descripcion:</strong> {{ selectedOrder.description }}</p>
             </div>
 
-            <div class="flex gap-4 border-t pt-3">
+            <div class="space-y-3 border-t pt-3">
                 <a
-                    v-if="selectedOrder.quotation_url"
-                    :href="selectedOrder.quotation_url"
+                    v-if="selectedOrder.quotation_file"
+                    :href="selectedOrder.quotation_file.url"
                     target="_blank"
-                    class="text-blue-600"
+                    class="block text-blue-600"
                 >
                     Ver cotizacion
                 </a>
 
                 <a
-                    v-if="selectedOrder.evidence_url"
-                    :href="selectedOrder.evidence_url"
+                    v-for="(file, index) in selectedOrder.evidence_files || []"
+                    :key="file.id"
+                    :href="file.url"
                     target="_blank"
-                    class="text-blue-600"
+                    class="block text-blue-600"
                 >
-                    Ver evidencia
+                    Ver evidencia {{ index + 1 }}
                 </a>
             </div>
         </div>
@@ -101,7 +102,7 @@ const columns = [
     { key: 'work_order.folio', label: 'OT', sortable: true, filterable: true },
     { key: 'work_order.unit.econame', label: 'Unidad', filterable: true },
     { key: 'supplier.name', label: 'Proveedor', filterable: true },
-    { key: 'cost', label: 'Costo', formatter: (value) => formatCurrency(value) },
+    { key: 'cost', label: 'Costo con IVA', formatter: (value) => formatCurrency(value) },
     { key: 'status', label: 'Estado', filterable: true },
     {
         key: 'treasury_accepted_at',

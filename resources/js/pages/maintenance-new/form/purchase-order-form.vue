@@ -56,7 +56,7 @@
                         </div>
 
                         <div class="form-item">
-                            <label>Costo *</label>
+                            <label>Costo con IVA *</label>
                             <input v-model.number="item.cost" type="number" min="0.01" step="0.01" required :disabled="isEditing">
                         </div>
 
@@ -97,39 +97,159 @@
                             </p>
                         </div>
 
-                        <div class="form-item">
-                            <label>PDF de cotizacion *</label>
-                            <input
-                                v-if="!isEditing"
-                                type="file"
-                                accept="application/pdf"
-                                required
-                                @change="setFile('quotation', $event)"
-                            >
-                            <a v-if="item.quotation_url" :href="item.quotation_url" target="_blank" class="text-sm text-blue-600">
-                                Ver cotizacion
-                            </a>
+                    </div>
+                </section>
 
-                            <p v-if="errors.quotation" class="text-sm text-red-500">
+                <section class="border-t pt-5">
+                    <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-xl font-bold">Archivos de la orden</h3>
+                            <p class="text-sm text-gray-500">
+                                Una cotizacion en PDF y hasta cinco evidencias.
+                            </p>
+                        </div>
+
+                        <span
+                            v-if="!canManageFiles"
+                            class="rounded bg-gray-100 px-3 py-1 text-sm text-gray-600"
+                        >
+                            No cuenta con permiso para administrar archivos
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                        <div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
+                            <div class="mb-3 flex items-center justify-between gap-2">
+                                <div>
+                                    <h4 class="font-semibold">Cotizacion</h4>
+                                    <p class="text-xs text-gray-500">PDF, maximo 10 MB</p>
+                                </div>
+
+                                <span class="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700">
+                                    1 archivo
+                                </span>
+                            </div>
+
+                            <label
+                                v-if="canManageFiles && !currentQuotation"
+                                class="block cursor-pointer rounded border-2 border-dashed border-blue-300 bg-white p-4 text-center text-sm text-blue-700 hover:bg-blue-50"
+                            >
+                                Seleccionar cotizacion
+                                <input
+                                    class="hidden"
+                                    type="file"
+                                    accept="application/pdf"
+                                    @change="selectQuotation"
+                                >
+                            </label>
+
+                            <div v-if="currentQuotation" class="mt-3 flex items-center gap-3 rounded border bg-white p-3">
+                                <div class="flex h-10 w-10 items-center justify-center rounded bg-red-100 font-bold text-red-700">
+                                    PDF
+                                </div>
+
+                                <div class="min-w-0 grow">
+                                    <p class="truncate text-sm font-medium">{{ currentQuotation.name }}</p>
+
+                                    <a
+                                        v-if="currentQuotation.url"
+                                        :href="currentQuotation.url"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="text-xs text-blue-600 hover:underline"
+                                    >
+                                        Ver archivo
+                                    </a>
+                                </div>
+
+                                <button
+                                    v-if="canManageFiles"
+                                    type="button"
+                                    class="rounded px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+                                    @click="removeFile(currentQuotation, 'quotation')"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
+
+                            <p v-if="errors.quotation" class="mt-2 text-sm text-red-500">
                                 {{ errors.quotation[0] }}
                             </p>
                         </div>
 
-                        <div class="form-item">
-                            <label>Evidencia *</label>
-                            <input
-                                v-if="!isEditing"
-                                type="file"
-                                accept="application/pdf,image/*"
-                                required
-                                @change="setFile('evidence', $event)"
-                            >
-                            <a v-if="item.evidence_url" :href="item.evidence_url" target="_blank" class="text-sm text-blue-600">
-                                Ver evidencia
-                            </a>
+                        <div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
+                            <div class="mb-3 flex items-center justify-between gap-2">
+                                <div>
+                                    <h4 class="font-semibold">Evidencias</h4>
+                                    <p class="text-xs text-gray-500">PDF o imagen, maximo 10 MB por archivo</p>
+                                </div>
 
-                            <p v-if="errors.evidence" class="text-sm text-red-500">
-                                {{ errors.evidence[0] }}
+                                <span class="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700">
+                                    {{ currentEvidences.length }} / 5
+                                </span>
+                            </div>
+
+                            <label
+                                v-if="canManageFiles && currentEvidences.length < 5"
+                                class="block cursor-pointer rounded border-2 border-dashed border-blue-300 bg-white p-4 text-center text-sm text-blue-700 hover:bg-blue-50"
+                            >
+                                Seleccionar evidencias
+                                <input
+                                    class="hidden"
+                                    type="file"
+                                    accept="application/pdf,image/jpeg,image/png,image/webp"
+                                    multiple
+                                    @change="selectEvidences"
+                                >
+                            </label>
+
+                            <div v-if="currentEvidences.length" class="mt-3 space-y-2">
+                                <div
+                                    v-for="(file, index) in currentEvidences"
+                                    :key="file.id || `${file.name}-${index}`"
+                                    class="flex items-center gap-3 rounded border bg-white p-3"
+                                >
+                                    <img
+                                        v-if="file.preview || (file.is_image && file.url)"
+                                        :src="file.preview || file.url"
+                                        alt="Vista previa de evidencia"
+                                        class="h-10 w-10 rounded object-cover"
+                                    >
+
+                                    <div
+                                        v-else
+                                        class="flex h-10 w-10 items-center justify-center rounded bg-gray-100 text-xs font-bold text-gray-600"
+                                    >
+                                        {{ file.is_image ? 'IMG' : 'PDF' }}
+                                    </div>
+
+                                    <div class="min-w-0 grow">
+                                        <p class="truncate text-sm font-medium">{{ file.name }}</p>
+
+                                        <a
+                                            v-if="file.url"
+                                            :href="file.url"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="text-xs text-blue-600 hover:underline"
+                                        >
+                                            Ver archivo
+                                        </a>
+                                    </div>
+
+                                    <button
+                                        v-if="canManageFiles"
+                                        type="button"
+                                        class="rounded px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+                                        @click="removeFile(file, 'evidence')"
+                                    >
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p v-if="errors.evidences" class="mt-2 text-sm text-red-500">
+                                {{ errors.evidences[0] }}
                             </p>
                         </div>
                     </div>
@@ -146,7 +266,7 @@
                     type="submit"
                     class="rounded bg-[#18364a] px-4 py-2 text-white"
                 >
-                    {{ isEditing ? 'Actualizar condicion de pago' : 'Crear orden de compra' }}
+                    {{ isEditing ? 'Actualizar' : 'Crear orden de compra' }}
                 </button>
             </div>
         </form>
@@ -160,7 +280,7 @@ import { getWorkshopCatalogsApi } from '../../../apis/WorkshopCatalogApi';
 import {
     createPurchaseOrderApi,
     getPurchaseOrderDetailApi,
-    updatePurchaseOrderPaymentConditionApi,
+    updatePurchaseOrderApi,
 } from '../../../apis/PurchaseOrderApi';
 import breadcrumb from '../../../components/breadcrumb.vue';
 import { usePermissions } from '../../../composables/usePermissions';
@@ -171,6 +291,9 @@ const dialogs = inject('swal');
 const { hasPermission } = usePermissions();
 const isEditing = computed(() => route.params.id && route.params.id !== 'new');
 const canEditPaymentCondition = computed(() => isEditing.value && hasPermission('maintenances.edit'));
+const canManageFiles = computed(() => isEditing.value
+    ? hasPermission('maintenances.edit')
+    : hasPermission('maintenances.create'));
 const canSave = computed(() => isEditing.value
     ? canEditPaymentCondition.value
     : hasPermission('maintenances.create'));
@@ -196,10 +319,23 @@ const item = reactive({
 const catalogs = reactive({ work_orders: [], suppliers: [] });
 const errors = ref({});
 const quotation = ref(null);
-const evidence = ref(null);
+const evidences = ref([]);
+const deletedFileIds = ref([]);
 
 const selectedWorkOrder = computed(() => catalogs.work_orders.find((order) => order.id === item.work_order_id));
 const selectedUnitName = computed(() => selectedWorkOrder.value?.unit?.econame || item.work_order?.unit?.econame || '');
+const currentQuotation = computed(() => {
+    if (quotation.value) return { name: quotation.value.name, file: quotation.value };
+    if (item.quotation_file && !deletedFileIds.value.includes(item.quotation_file.id)) {
+        return item.quotation_file;
+    }
+
+    return null;
+});
+const currentEvidences = computed(() => [
+    ...(item.evidence_files || []).filter((file) => !deletedFileIds.value.includes(file.id)),
+    ...evidences.value,
+]);
 
 onMounted(async () => {
 
@@ -211,14 +347,62 @@ onMounted(async () => {
     }
 });
 
-function setFile(type, event) {
+async function selectQuotation(event) {
     const file = event.target.files[0] || null;
+    event.target.value = '';
 
-    if (type === 'quotation') {
-        quotation.value = file;
-    } else {
-        evidence.value = file;
+    if (!file) return;
+
+    quotation.value = file;
+}
+
+async function selectEvidences(event) {
+    const selectedFiles = Array.from(event.target.files || []);
+    event.target.value = '';
+
+    if (!selectedFiles.length) return;
+
+    const available = 5 - currentEvidences.value.length;
+
+    if (selectedFiles.length > available) {
+        dialogs.fire('Limite de archivos', `Solo puede agregar ${available} evidencia(s) mas.`, 'warning');
+        return;
     }
+
+    evidences.value.push(...selectedFiles.map((file) => ({
+        name: file.name,
+        file,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+    })));
+}
+
+async function removeFile(file, type) {
+    if (!file.id) {
+        if (type === 'quotation') {
+            quotation.value = null;
+        } else {
+            const stagedIndex = evidences.value.indexOf(file);
+            const stagedFile = evidences.value[stagedIndex];
+
+            if (stagedFile?.preview) URL.revokeObjectURL(stagedFile.preview);
+            if (stagedIndex >= 0) evidences.value.splice(stagedIndex, 1);
+        }
+
+        return;
+    }
+
+    const result = await dialogs.fire({
+        title: 'Eliminar archivo',
+        text: 'El archivo se eliminara cuando presione Actualizar.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Si, eliminar',
+        cancelButtonText: 'Cancelar',
+    });
+
+    if (!result.isConfirmed) return;
+
+    deletedFileIds.value.push(file.id);
 }
 
 function buildFormData() {
@@ -231,7 +415,25 @@ function buildFormData() {
     });
 
     if (quotation.value) formData.append('quotation', quotation.value);
-    if (evidence.value) formData.append('evidence', evidence.value);
+    evidences.value.forEach((file) => formData.append('evidences[]', file.file));
+
+    return formData;
+}
+
+function buildUpdateFormData() {
+    const formData = new FormData();
+
+    if (item.payment_condition !== null) {
+        formData.append('payment_condition', item.payment_condition);
+    }
+
+    if (item.payment_condition === 'Credito' && item.credit_days !== null) {
+        formData.append('credit_days', item.credit_days);
+    }
+
+    if (quotation.value) formData.append('quotation', quotation.value);
+    evidences.value.forEach((file) => formData.append('evidences[]', file.file));
+    deletedFileIds.value.forEach((id) => formData.append('deleted_file_ids[]', id));
 
     return formData;
 }
@@ -240,10 +442,7 @@ async function save() {
     try {
         errors.value = {};
         if (isEditing.value) {
-            await updatePurchaseOrderPaymentConditionApi(item.id, {
-                payment_condition: item.payment_condition,
-                credit_days: item.payment_condition === 'Credito' ? item.credit_days : null,
-            });
+            await updatePurchaseOrderApi(item.id, buildUpdateFormData());
         } else {
             await createPurchaseOrderApi(buildFormData());
         }

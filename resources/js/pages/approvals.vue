@@ -438,7 +438,7 @@ const getApprovalDetails = async (kind, scope_id, approvable_id) => {
           {id: 3, title: 'Unidad:', description: order.work_order?.unit?.econame || 'N/A'},
           {id: 4, title: 'Proveedor:', description: order.supplier?.name || 'N/A'},
           {id: 5, title: 'Descripcion:', description: order.description},
-          {id: 6, title: 'Costo:', description: '$' + Number(order.cost || 0).toFixed(2)},
+          {id: 6, title: 'Costo con IVA:', description: '$' + Number(order.cost || 0).toFixed(2)},
         ];
     }
     else if(kind == 'maintenance_expenses')

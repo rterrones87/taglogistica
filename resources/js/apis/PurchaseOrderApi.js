@@ -20,8 +20,9 @@ export async function createPurchaseOrderApi(data) {
     return response.data;
 }
 
-export async function updatePurchaseOrderPaymentConditionApi(id, data) {
-    const response = await axios.put(`${endpoint}/${id}/payment-condition`, data);
+export async function updatePurchaseOrderApi(id, data) {
+    data.append('_method', 'PUT');
+    const response = await axios.post(`${endpoint}/${id}`, data);
 
     return response.data;
 }

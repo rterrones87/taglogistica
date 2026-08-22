@@ -25,31 +25,32 @@ class WorkOrder extends Model
         'started_by',
         'started_at',
         'closed_by',
-        'closed_at'
+        'closed_at',
     ];
+
     protected $casts = [
         'opened_at' => 'date:Y-m-d',
         'started_at' => 'datetime',
-        'closed_at' => 'datetime'
+        'closed_at' => 'datetime',
     ];
 
     public static function searchList(array $filters)
     {
         $query = self::query()
-            ->with(['unit', 'operator:id,name', 'mechanic:id,name'])
+            ->with(['unit:id,econame', 'mechanic:id,name'])
             ->withCount([
-                'purchaseOrders as purchase_orders_count' => fn($query) => $query->where('status', 'Aprobada'),
+                'purchaseOrders as purchase_orders_count' => fn ($query) => $query->where('status', 'Aprobada'),
             ])
             ->withSum([
-                'purchaseOrders as purchase_orders_sum_cost' => fn($query) => $query->where('status', 'Aprobada'),
+                'purchaseOrders as purchase_orders_sum_cost' => fn ($query) => $query->where('status', 'Aprobada'),
             ], 'cost')
             ->latest('id');
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($builder) use ($search) {
                 $builder->where('folio', 'like', "%{$search}%")
@@ -59,7 +60,7 @@ class WorkOrder extends Model
             });
         }
 
-        if (!empty($filters['only_open'])) {
+        if (! empty($filters['only_open'])) {
             $query->where('status', '!=', 'Finalizado');
         }
 
@@ -126,14 +127,19 @@ class WorkOrder extends Model
 
     private static function detailRelations(): array
     {
-        return ['unit', 'operator:id,name', 'mechanic:id,name', 'creator:id,name', 'startedBy:id,name', 'closedBy:id,name','purchaseOrders'];
+        return [
+            'startedBy:id,name',
+            'closedBy:id,name',
+            'purchaseOrders:id,work_order_id,supplier_id,folio,description,cost,status',
+            'purchaseOrders.supplier:id,name',
+        ];
     }
 
     public function unit()
     {
         return $this->belongsTo(Unit::class);
     }
-    
+
     public function operator()
     {
         return $this->belongsTo(User::class, 'operator_id');
@@ -148,7 +154,7 @@ class WorkOrder extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-    
+
     public function startedBy()
     {
         return $this->belongsTo(User::class, 'started_by');

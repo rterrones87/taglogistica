@@ -275,7 +275,7 @@ const purchaseOrderColumns = [
     { key: 'description', label: 'Descripcion', filterable: true },
     {
         key: 'cost',
-        label: 'Costo',
+        label: 'Costo con IVA',
         sortable: true,
         formatter: (value) => formatCurrency(value),
     },

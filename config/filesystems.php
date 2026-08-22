@@ -44,6 +44,22 @@ return [
             'throw' => false,
         ],
 
+        'evidencias' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/maintenance/evidencias'),
+            'url' => env('APP_URL').'/storage/maintenance/evidencias/',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
+        'cotizacion' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/maintenance/cotizacion'),
+            'url' => env('APP_URL').'/storage/maintenance/cotizacion/',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

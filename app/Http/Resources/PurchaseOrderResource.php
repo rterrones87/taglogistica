@@ -3,12 +3,20 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class PurchaseOrderResource extends JsonResource
 {
     public function toArray($request): array
     {
+        $evidenceFiles = $this->whenLoaded('files', function () {
+            return $this->files
+                ->where('type', 2)
+                ->values()
+                ->each(function ($file, $index) {
+                    $file->setAttribute('evidence_number', $index + 1);
+                });
+        });
+
         return [
             'id' => $this->id,
             'folio' => $this->folio,
@@ -20,8 +28,12 @@ class PurchaseOrderResource extends JsonResource
             'cost' => (float) $this->cost,
             'payment_condition' => $this->payment_condition,
             'credit_days' => $this->credit_days,
-            'quotation_url' => $this->quotation_path ? Storage::url($this->quotation_path) : null,
-            'evidence_url' => $this->evidence_path ? Storage::url($this->evidence_path) : null,
+            'quotation_file' => new FilePurchaseOrderResource(
+                $this->whenLoaded('files', fn () => $this->files->firstWhere('type', 1))
+            ),
+            'evidence_files' => FilePurchaseOrderResource::collection(
+                $evidenceFiles
+            ),
             'status' => $this->status,
             'created_by' => $this->created_by,
             'creator' => $this->whenLoaded('creator'),

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\WorkOrderRequest;
+use App\Http\Resources\WorkOrderDetailResource;
 use App\Http\Resources\WorkOrderResource;
 use App\Models\WorkOrder;
 use Illuminate\Http\JsonResponse;
@@ -18,12 +19,10 @@ class WorkOrderController extends Controller
     public function index(Request $request)
     {
         try {
-
             $filters = $request->only(['status', 'search']);
             $registers = WorkOrder::searchList($filters);
 
             return WorkOrderResource::collection($registers);
-
         } catch (Throwable $exception) {
             return $this->errorResponse($exception, 'consultar el listado');
         }
@@ -41,7 +40,7 @@ class WorkOrderController extends Controller
                 'folio' => $order->folio,
             ]);
 
-            return new WorkOrderResource($order);
+            return new WorkOrderDetailResource($order);
         } catch (Throwable $exception) {
             return $this->errorResponse($exception, 'crear la orden');
         }
@@ -50,10 +49,9 @@ class WorkOrderController extends Controller
     public function show(Request $request, WorkOrder $workOrder)
     {
         try {
-            
             $order = $workOrder->detail();
 
-            return new WorkOrderResource($order);
+            return new WorkOrderDetailResource($order);
         } catch (Throwable $exception) {
             return $this->errorResponse($exception, 'consultar la orden');
         }
@@ -69,7 +67,7 @@ class WorkOrderController extends Controller
                 'work_order_id' => $order->id,
             ]);
 
-            return new WorkOrderResource($order);
+            return new WorkOrderDetailResource($order);
         } catch (Throwable $exception) {
             return $this->errorResponse($exception, 'actualizar la orden');
         }
@@ -85,7 +83,7 @@ class WorkOrderController extends Controller
                 'work_order_id' => $order->id,
             ]);
 
-            return new WorkOrderResource($order);
+            return new WorkOrderDetailResource($order);
         } catch (Throwable $exception) {
             return $this->errorResponse($exception, 'iniciar la orden');
         }
@@ -101,7 +99,7 @@ class WorkOrderController extends Controller
                 'work_order_id' => $order->id,
             ]);
 
-            return new WorkOrderResource($order);
+            return new WorkOrderDetailResource($order);
         } catch (Throwable $exception) {
             return $this->errorResponse($exception, 'cerrar la orden');
         }
