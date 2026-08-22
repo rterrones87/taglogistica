@@ -264,9 +264,15 @@
                 <button
                     v-if="canSave"
                     type="submit"
-                    class="rounded bg-[#18364a] px-4 py-2 text-white"
+                    :disabled="isSaving"
+                    class="flex items-center gap-2 rounded bg-[#18364a] px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    {{ isEditing ? 'Actualizar' : 'Crear orden de compra' }}
+                    <span
+                        v-if="isSaving"
+                        class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+                    ></span>
+
+                    {{ isSaving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear orden de compra') }}
                 </button>
             </div>
         </form>
@@ -318,6 +324,7 @@ const item = reactive({
 
 const catalogs = reactive({ work_orders: [], suppliers: [] });
 const errors = ref({});
+const isSaving = ref(false);
 const quotation = ref(null);
 const evidences = ref([]);
 const deletedFileIds = ref([]);
@@ -439,6 +446,10 @@ function buildUpdateFormData() {
 }
 
 async function save() {
+    if (isSaving.value) return;
+
+    isSaving.value = true;
+
     try {
         errors.value = {};
         if (isEditing.value) {
@@ -453,6 +464,8 @@ async function save() {
     } catch (error) {
         errors.value = error.response?.data?.errors || {};
         dialogs.fire('Error', error.response?.data?.message || 'Revise los campos', 'error');
+    } finally {
+        isSaving.value = false;
     }
 }
 
