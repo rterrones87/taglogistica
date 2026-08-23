@@ -345,13 +345,22 @@ const currentEvidences = computed(() => [
 ]);
 
 onMounted(async () => {
+    try {
+        if (isEditing.value) {
+            const [catalogData, response] = await Promise.all([
+                getWorkshopCatalogsApi(),
+                getPurchaseOrderDetailApi(route.params.id),
+            ]);
 
-    Object.assign(catalogs, await getWorkshopCatalogsApi());
-
-    if (isEditing.value) {
-        const response = await getPurchaseOrderDetailApi(route.params.id);
-        Object.assign(item, response.data);
-    }
+            Object.assign(catalogs, catalogData);
+            Object.assign(item, response.data);
+        } else {
+            Object.assign(catalogs, await getWorkshopCatalogsApi());
+        }
+    } catch (error) {
+        dialogs.fire('Error', error.response?.data?.message || 'No fue posible cargar la orden', 'error');
+        router.push(workOrderReturnPath.value);
+    } 
 });
 
 async function selectQuotation(event) {

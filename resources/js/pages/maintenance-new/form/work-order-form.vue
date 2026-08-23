@@ -133,7 +133,19 @@
                 <section v-if="isEditing" class="border-t pt-4">
                     <h3 class="mb-3 text-xl font-bold">Ordenes de compra</h3>
 
+                    <div
+                        v-if="isLoadingPurchaseOrders"
+                        class="flex min-h-[260px] items-center justify-center"
+                    >
+                        <div class="flex flex-col items-center gap-3 text-gray-600">
+                            <span class="h-10 w-10 animate-spin rounded-full border-4 border-[#18364a] border-t-transparent"></span>
+
+                            <span>Cargando órdenes de compra...</span>
+                        </div>
+                    </div>
+
                     <DataTable
+                        v-else
                         :data="item.purchase_orders || []"
                         :columns="purchaseOrderColumns"
                         emptyMessage="Esta orden de trabajo no tiene ordenes de compra."
@@ -270,6 +282,7 @@ const catalogs = reactive({
     suppliers: [],
 });
 const errors = ref({});
+const isLoadingPurchaseOrders = ref(isEditing.value);
 const isSaving = ref(false);
 const vehicleCategory = computed(() => vehicleCategories.includes(item.unit_category));
 const canFinishWorkOrder = computed(() => isEditing.value
@@ -290,11 +303,23 @@ const purchaseOrderColumns = [
 ];
 
 onMounted(async () => {
-    Object.assign(catalogs, await getWorkshopCatalogsApi());
+    try {
+        if (isEditing.value) {
+            const [catalogData, response] = await Promise.all([
+                getWorkshopCatalogsApi(),
+                getWorkOrderDetailApi(route.params.id),
+            ]);
 
-    if (isEditing.value) {
-        const response = await getWorkOrderDetailApi(route.params.id);
-        Object.assign(item, response.data);
+            Object.assign(catalogs, catalogData);
+            Object.assign(item, response.data);
+        } else {
+            Object.assign(catalogs, await getWorkshopCatalogsApi());
+        }
+    } catch (error) {
+        dialogs.fire('Error', error.response?.data?.message || 'No fue posible cargar la orden', 'error');
+        router.push('/panel/maintenance-new/work-orders');
+    } finally {
+        isLoadingPurchaseOrders.value = false;
     }
 });
 

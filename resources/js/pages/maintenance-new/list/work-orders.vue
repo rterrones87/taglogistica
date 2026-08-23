@@ -14,9 +14,19 @@
             </router-link>
         </div>
 
+        <div v-if="isLoading" class="flex min-h-[320px] items-center justify-center">
+            <div class="flex flex-col items-center gap-3 text-gray-600">
+                <span class="h-10 w-10 animate-spin rounded-full border-4 border-[#18364a] border-t-transparent"></span>
+
+                <span>Cargando órdenes de trabajo...</span>
+            </div>
+        </div>
+
         <DataTable
+            v-else
             :data="items"
             :columns="columns"
+            :onReload="loadItems"
             emptyMessage="No hay ordenes de trabajo registradas."
         >
             <template #actions="{ row }">
@@ -31,7 +41,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { inject, onMounted, ref } from 'vue';
 import { getWorkOrdersApi } from '../../../apis/OrderWorkApi';
 import breadcrumb from '../../../components/breadcrumb.vue';
 import DataTable from '../../../components/DataTable.vue';
@@ -44,6 +54,8 @@ const breadcrumbItems = [
 ];
 
 const items = ref([]);
+const isLoading = ref(false);
+const dialogs = inject('swal');
 const { hasPermission } = usePermissions();
 
 const columns = [
@@ -78,8 +90,21 @@ const columns = [
     },
 ];
 
-onMounted(async () => {
-    const response = await getWorkOrdersApi();
-    items.value = response.data;
-});
+onMounted(loadItems);
+
+async function loadItems() {
+    try {
+        isLoading.value = true;
+        const response = await getWorkOrdersApi();
+        items.value = response.data;
+    } catch (error) {
+        dialogs.fire(
+            'Error',
+            error.response?.data?.message || 'No fue posible consultar las órdenes de trabajo.',
+            'error',
+        );
+    } finally {
+        isLoading.value = false;
+    }
+}
 </script>
