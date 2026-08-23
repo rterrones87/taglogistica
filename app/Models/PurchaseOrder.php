@@ -166,6 +166,7 @@ class PurchaseOrder extends Model
     {
         if ($approval->kind === 'purchase_order') {
             $this->update(['status' => 'Aprobada']);
+            TreasuryPurchaseOrder::createFromPurchaseOrder($this);
         }
     }
 

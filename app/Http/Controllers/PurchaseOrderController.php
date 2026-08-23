@@ -86,45 +86,6 @@ class PurchaseOrderController extends Controller
         }
     }
 
-    public function treasuryIndex(Request $request)
-    {
-        try {
-            $filters = [
-                'accepted' => $request->filled('accepted') ? $request->boolean('accepted') : null,
-            ];
-            $registers = PurchaseOrder::searchTreasuryList($filters);
-
-            return PurchaseOrderResource::collection($registers);
-        } catch (Throwable $exception) {
-            return $this->errorResponse($exception, 'consultar las ordenes aprobadas en tesoreria');
-        }
-    }
-
-    public function treasuryShow(PurchaseOrder $purchaseOrder)
-    {
-        try {
-            return new PurchaseOrderResource($purchaseOrder->detail());
-        } catch (Throwable $exception) {
-            return $this->errorResponse($exception, 'consultar el detalle en tesoreria');
-        }
-    }
-
-    public function acceptForTreasury(Request $request, PurchaseOrder $purchaseOrder)
-    {
-        try {
-            $order = $purchaseOrder->acceptForTreasury($request->user()->id);
-
-            Log::channel(self::LOG_CHANNEL)->info('Orden de compra aceptada por tesoreria.', [
-                'user_id' => $request->user()->id,
-                'purchase_order_id' => $order->id,
-            ]);
-
-            return new PurchaseOrderResource($order);
-        } catch (Throwable $exception) {
-            return $this->errorResponse($exception, 'aceptar la orden en tesoreria');
-        }
-    }
-
     private function errorResponse(Throwable $exception, string $action): JsonResponse
     {
         $status = $exception instanceof HttpExceptionInterface ? $exception->getStatusCode() : 500;

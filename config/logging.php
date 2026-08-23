@@ -85,6 +85,13 @@ return [
             'days' => 60,
         ],
 
+        'treasury-purchase-order' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/treasury-purchase-order/treasury-purchase-order.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
         'maintenance-catalog' => [
             'driver' => 'daily',
             'path' => storage_path('logs/maintenance-catalog/maintenance-catalog.log'),

@@ -28,6 +28,7 @@ use App\Http\Controllers\ServiceOperatorTypeRateController;
 use App\Http\Controllers\WorkOrderController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\WorkshopCatalogController;
+use App\Http\Controllers\TreasuryPurchaseOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -202,18 +203,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     });
 
-    Route::prefix('treasury/purchase-orders')->group(function () {
-        Route::get('/', [PurchaseOrderController::class, 'treasuryIndex'])
-            ->middleware('permission:treasury.view_purchase_orders');
-        Route::get('{purchaseOrder}', [PurchaseOrderController::class, 'treasuryShow'])
-            ->middleware('permission:treasury.view_purchase_orders');
-        Route::post('{purchaseOrder}/accept', [PurchaseOrderController::class, 'acceptForTreasury'])
-            ->middleware('permission:treasury.accept_purchase_orders');
-    });
-
     // Tesorería
-    Route::get('treasury/maintenances', [TreasuryController::class, 'maintenances'])->middleware('permission:treasury.view_maintenances');
-    Route::get('treasury/maintenances/details/{id}', [TreasuryController::class, 'maintenanceDetails'])->middleware('permission:treasury.view_maintenances');
+    Route::prefix('treasury/maintenances')->group(function () {
+        Route::get('/', [TreasuryPurchaseOrderController::class, 'index'])
+            ->middleware('permission:treasury.view_maintenances');
+        Route::get('{treasuryPurchaseOrder}', [TreasuryPurchaseOrderController::class, 'show'])
+            ->middleware('permission:treasury.view_maintenances');
+        Route::post('{treasuryPurchaseOrder}/pay', [TreasuryPurchaseOrderController::class, 'markAsPaid'])
+            ->middleware('permission:treasury.apply_payment');
+    });
+    
     Route::get('treasury/services', [TreasuryController::class, 'services'])->middleware('permission:treasury.view_services');
     Route::get('treasury/payments', [TreasuryController::class, 'payments'])->middleware('permission:treasury.view_payments');
     Route::get('treasury/payments/details/{id}', [TreasuryController::class, 'payments_details'])->middleware('permission:treasury.view_payments');
@@ -227,7 +226,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('download/services', [ServiceController::class, 'download'])->middleware('permission:services.download');
     Route::get('download/maintenances', [MaintenanceController::class, 'download'])->middleware('permission:maintenances.view');
     Route::get('download/treasury/services', [TreasuryController::class, 'download'])->middleware('permission:treasury.view_services');
-    Route::get('download/treasury/maintenances', [TreasuryController::class, 'downloadMaintenances'])->middleware('permission:treasury.view_maintenances');
 
     // Aprobaciones
     Route::post('/approvals/{approval}/approve', [ApprovalController::class, 'approve'])

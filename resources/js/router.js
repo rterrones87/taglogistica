@@ -36,8 +36,7 @@ import Cost from './pages/forms/cost.vue';
 import Maintenance from './pages/forms/maintenance.vue';
 import Extras from './pages/forms/extras.vue';
 import TreasuryServices from './pages/treasury/services.vue';
-import TreasuryMaintenances from './pages/treasury/maintenances.vue';
-import TreasuryPurchaseOrders from './pages/treasury/purchase-orders.vue';
+import TreasuryMaintenances from './pages/treasury/maintenance-purchase-orders.vue';
 import TreasuryNominas from './pages/treasury/nominas.vue';
 import Unauthorized from './pages/unauthorized.vue';
 import Approvals from './pages/approvals.vue';
@@ -150,7 +149,6 @@ const routes = [
             //{ path: 'maintenance/:id?', component: Maintenance, meta: { requiresPermission: ['maintenances.view', 'maintenances.create', 'maintenances.edit'] } },
             { path: 'treasury/services', component: TreasuryServices, meta: { requiresPermission: 'treasury.view_services' } },
             { path: 'treasury/maintenances', component: TreasuryMaintenances, meta: { requiresPermission: 'treasury.view_maintenances' } },
-            { path: 'treasury/purchase-orders', component: TreasuryPurchaseOrders, meta: { requiresPermission: 'treasury.view_purchase_orders' } },
             { path: 'treasury/nominas', component: TreasuryNominas, meta: { requiresPermission: 'treasury.view_payments' } },
             { path: 'operators/payments', component: OperatorPayments, meta : { requiresPermission: 'operator_payments.view' } },
             { path: 'operators/operator_payment/:id?', component: OperatorPayment, meta : { requiresPermission: ['operator_payments.view', 'operator_payments.create', 'operator_payments.edit'] } },
