@@ -291,8 +291,8 @@ import {
 import breadcrumb from '../../../components/breadcrumb.vue';
 import { usePermissions } from '../../../composables/usePermissions';
 import {
-    purchaseOrderCatalogs,
-    itemPurchaseOrder,
+    createPurchaseOrderCatalogs,
+    createPurchaseOrderForm,
     MAX_EVIDENCE_FILES,
 } from '../config/purchaseOrderForm';
 
@@ -318,8 +318,8 @@ const breadcrumbItems = computed(() => [
     { title: isEditing.value ? 'Detalle de OC' : 'Nueva OC' },
 ]);
 
-const item = reactive(itemPurchaseOrder(route.query.work_order_id));
-const catalogs = reactive(purchaseOrderCatalogs());
+const item = reactive(createPurchaseOrderForm(route.query.work_order_id));
+const catalogs = reactive(createPurchaseOrderCatalogs());
 const errors = ref({});
 const isSaving = ref(false);
 const quotation = ref(null);

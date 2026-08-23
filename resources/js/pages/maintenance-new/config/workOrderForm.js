@@ -25,7 +25,25 @@ export const purchaseOrderColumns = [
     { key: 'status', label: 'Estado', sortable: true, filterable: true },
 ];
 
-export function itemWorkOrder() {
+/**
+ * @typedef {Object} WorkOrderForm
+ * @property {string} unit_category
+ * @property {string} maintenance_type
+ * @property {number|string} unit_id
+ * @property {number} initial_mileage
+ * @property {string} opened_at
+ * @property {number|string} operator_id
+ * @property {number|string} mechanic_id
+ * @property {string} failure_description
+ * @property {string} work_type
+ */
+
+/**
+ * Crea un estado independiente para el formulario de orden de trabajo.
+ *
+ * @returns {WorkOrderForm}
+ */
+export function createWorkOrderForm() {
     return {
         unit_category: '',
         maintenance_type: '',
@@ -39,7 +57,12 @@ export function itemWorkOrder() {
     };
 }
 
-export function workshopCatalogs() {
+/**
+ * Crea la estructura inicial de los catalogos del formulario.
+ *
+ * @returns {{units: Array, operators: Array, mechanics: Array, suppliers: Array}}
+ */
+export function createWorkshopCatalogs() {
     return {
         units: [],
         operators: [],

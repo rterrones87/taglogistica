@@ -235,8 +235,8 @@ import ErrorText from '../../../components/ErrorText.vue';
 import TableAction from '../../../components/TableAction.vue';
 import { usePermissions } from '../../../composables/usePermissions';
 import {
-    itemWorkOrder,
-    workshopCatalogs,
+    createWorkOrderForm,
+    createWorkshopCatalogs,
     formatCurrency,
     purchaseOrderColumns,
     vehicleCategories,
@@ -257,8 +257,8 @@ const breadcrumbItems = computed(() => [
     { title: isEditing.value ? 'Detalle de OT' : 'Nueva OT' },
 ]);
 
-const item = reactive(itemWorkOrder());
-const catalogs = reactive(workshopCatalogs());
+const item = reactive(createWorkOrderForm());
+const catalogs = reactive(createWorkshopCatalogs());
 const errors = ref({});
 const isLoadingPurchaseOrders = ref(isEditing.value);
 const isSaving = ref(false);
