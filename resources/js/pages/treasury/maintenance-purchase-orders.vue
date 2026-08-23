@@ -197,7 +197,8 @@ async function loadItems() {
     }
 }
 
-function changeTab() {
+function changeTab(tab) {
+    currentTab.value = tab;
     loadItems();
 }
 

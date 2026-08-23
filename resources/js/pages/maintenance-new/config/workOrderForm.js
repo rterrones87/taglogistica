@@ -25,7 +25,7 @@ export const purchaseOrderColumns = [
     { key: 'status', label: 'Estado', sortable: true, filterable: true },
 ];
 
-export function createWorkOrderForm() {
+export function itemWorkOrder() {
     return {
         unit_category: '',
         maintenance_type: '',
@@ -39,7 +39,7 @@ export function createWorkOrderForm() {
     };
 }
 
-export function createWorkshopCatalogs() {
+export function workshopCatalogs() {
     return {
         units: [],
         operators: [],

@@ -1,6 +1,6 @@
 export const MAX_EVIDENCE_FILES = 5;
 
-export function createPurchaseOrderForm(workOrderId = '') {
+export function itemPurchaseOrder(workOrderId = '') {
     return {
         work_order_id: workOrderId ? Number(workOrderId) : '',
         supplier_id: '',
@@ -11,7 +11,7 @@ export function createPurchaseOrderForm(workOrderId = '') {
     };
 }
 
-export function createPurchaseOrderCatalogs() {
+export function purchaseOrderCatalogs() {
     return {
         work_orders: [],
         suppliers: [],
