@@ -290,6 +290,11 @@ import {
 } from '../../../apis/PurchaseOrderApi';
 import breadcrumb from '../../../components/breadcrumb.vue';
 import { usePermissions } from '../../../composables/usePermissions';
+import {
+    createPurchaseOrderCatalogs,
+    createPurchaseOrderForm,
+    MAX_EVIDENCE_FILES,
+} from '../config/purchaseOrderForm';
 
 const route = useRoute();
 const router = useRouter();
@@ -313,16 +318,8 @@ const breadcrumbItems = computed(() => [
     { title: isEditing.value ? 'Detalle de OC' : 'Nueva OC' },
 ]);
 
-const item = reactive({
-    work_order_id: route.query.work_order_id ? Number(route.query.work_order_id) : '',
-    supplier_id: '',
-    description: '',
-    cost: '',
-    payment_condition: null,
-    credit_days: null,
-});
-
-const catalogs = reactive({ work_orders: [], suppliers: [] });
+const item = reactive(createPurchaseOrderForm(route.query.work_order_id));
+const catalogs = reactive(createPurchaseOrderCatalogs());
 const errors = ref({});
 const isSaving = ref(false);
 const quotation = ref(null);
@@ -378,7 +375,7 @@ async function selectEvidences(event) {
 
     if (!selectedFiles.length) return;
 
-    const available = 5 - currentEvidences.value.length;
+    const available = MAX_EVIDENCE_FILES - currentEvidences.value.length;
 
     if (selectedFiles.length > available) {
         dialogs.fire('Limite de archivos', `Solo puede agregar ${available} evidencia(s) mas.`, 'warning');
