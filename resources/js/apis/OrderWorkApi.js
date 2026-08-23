@@ -30,16 +30,9 @@ export async function updateWorkOrderApi(id, data) {
     return response.data;
 }
 
-//Colocar orden de trabajo en Proceso
-export async function startWorkOrderApi(id) {
-    const response = await axios.post(`${endpoint}/${id}/start`);
-
-    return response.data;
-}
-
-//Cerrar Orden de trabajo
-export async function closeWorkOrderApi(id) {
-    const response = await axios.post(`${endpoint}/${id}/close`);
+//Cambiar estado de la orden: 1 iniciar, 2 finalizar
+export async function changeWorkOrderStatusApi(id, status) {
+    const response = await axios.post(`${endpoint}/${id}/status`, { status });
 
     return response.data;
 }

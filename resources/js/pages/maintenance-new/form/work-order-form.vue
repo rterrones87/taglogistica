@@ -27,7 +27,7 @@
 
                             <select v-model="item.unit_category" required>
                                 <option value="">Seleccione</option>
-                                <option v-for="category in categories" :key="category">
+                                <option v-for="category in workOrderCategories" :key="category">
                                     {{ category }}
                                 </option>
                             </select>
@@ -187,7 +187,7 @@
                     v-if="isEditing && item.status === 'Abierto' && hasPermission('maintenances.change_state')"
                     type="button"
                     class="rounded bg-amber-600 px-4 py-2 text-white"
-                    @click="changeState('start')"
+                    @click="changeState(1)"
                 >
                     Cambiar a En Proceso
                 </button>
@@ -196,7 +196,7 @@
                     v-if="canFinishWorkOrder"
                     type="button"
                     class="rounded bg-red-700 px-4 py-2 text-white"
-                    @click="changeState('close')"
+                    @click="changeState(2)"
                 >
                     Finalizar
                 </button>
@@ -220,27 +220,28 @@
 </template>
 
 <script setup>
-import { computed, defineComponent, h, inject, onMounted, reactive, ref } from 'vue';
+import { computed, inject, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getWorkshopCatalogsApi } from '../../../apis/WorkshopCatalogApi';
 import {
-    closeWorkOrderApi,
+    changeWorkOrderStatusApi,
     createWorkOrderApi,
     getWorkOrderDetailApi,
-    startWorkOrderApi,
     updateWorkOrderApi,
 } from '../../../apis/OrderWorkApi';
 import breadcrumb from '../../../components/breadcrumb.vue';
 import DataTable from '../../../components/DataTable.vue';
+import ErrorText from '../../../components/ErrorText.vue';
 import TableAction from '../../../components/TableAction.vue';
 import { usePermissions } from '../../../composables/usePermissions';
-
-const ErrorText = defineComponent({
-    props: { errors: Array },
-    setup: (props) => () => props.errors?.length
-        ? h('p', { class: 'text-sm text-red-500' }, props.errors[0])
-        : null,
-});
+import {
+    createWorkOrderForm,
+    createWorkshopCatalogs,
+    formatCurrency,
+    purchaseOrderColumns,
+    vehicleCategories,
+    workOrderCategories,
+} from '../config/workOrderForm';
 
 const route = useRoute();
 const router = useRouter();
@@ -250,37 +251,14 @@ const isEditing = computed(() => route.params.id && route.params.id !== 'new');
 const canSave = computed(() => isEditing.value
     ? item.status !== 'Finalizado' && hasPermission('maintenances.edit')
     : hasPermission('maintenances.create'));
-const formDisabled = computed(() => !canSave.value);
 
 const breadcrumbItems = computed(() => [
     { title: 'Ordenes de trabajo', path: '/panel/maintenance-new/work-orders' },
     { title: isEditing.value ? 'Detalle de OT' : 'Nueva OT' },
 ]);
 
-const categories = [
-    'Tractor', 'Remolque', 'Dolly', 'Plataforma', 'Caja Refrigerada',
-    'Gastos de accidentes', 'Gastos de gruas', 'Mala operacion del operador', 'Rescate carretero',
-];
-const vehicleCategories = categories.slice(0, 5);
-
-const item = reactive({
-    unit_category: '',
-    maintenance_type: '',
-    unit_id: '',
-    initial_mileage: 1,
-    opened_at: new Date().toISOString().slice(0, 10),
-    operator_id: '',
-    mechanic_id: '',
-    failure_description: '',
-    work_type: '',
-});
-
-const catalogs = reactive({
-    units: [],
-    operators: [],
-    mechanics: [],
-    suppliers: [],
-});
+const item = reactive(createWorkOrderForm());
+const catalogs = reactive(createWorkshopCatalogs());
 const errors = ref({});
 const isLoadingPurchaseOrders = ref(isEditing.value);
 const isSaving = ref(false);
@@ -289,18 +267,6 @@ const canFinishWorkOrder = computed(() => isEditing.value
     && item.status === 'En Proceso'
     && !(item.purchase_orders || []).some((purchaseOrder) => purchaseOrder.status === 'Pendiente')
     && hasPermission('maintenances.change_state'));
-const purchaseOrderColumns = [
-    { key: 'folio', label: 'OC', sortable: true, filterable: true },
-    { key: 'supplier.name', label: 'Proveedor', filterable: true },
-    { key: 'description', label: 'Descripcion', filterable: true },
-    {
-        key: 'cost',
-        label: 'Costo con IVA',
-        sortable: true,
-        formatter: (value) => formatCurrency(value),
-    },
-    { key: 'status', label: 'Estado', sortable: true, filterable: true },
-];
 
 onMounted(async () => {
     try {
@@ -349,8 +315,8 @@ async function save() {
     }
 }
 
-async function changeState(action) {
-    const label = action === 'start' ? 'iniciar el trabajo' : 'finalizar la orden';
+async function changeState(status) {
+    const label = status === 1 ? 'iniciar el trabajo' : 'finalizar la orden';
     const result = await dialogs.fire({
         title: `¿Desea ${label}?`,
         icon: 'warning',
@@ -362,9 +328,7 @@ async function changeState(action) {
     if (!result.isConfirmed) return;
 
     try {
-        const response = action === 'start'
-            ? await startWorkOrderApi(item.id)
-            : await closeWorkOrderApi(item.id);
+        const response = await changeWorkOrderStatusApi(item.id, status);
         Object.assign(item, response.data);
         dialogs.fire('Excelente', 'Estado actualizado correctamente', 'success');
     } catch (error) {
@@ -376,7 +340,4 @@ function formatDateTime(value) {
     return value ? new Date(value).toLocaleString('es-MX') : '';
 }
 
-function formatCurrency(value) {
-    return Number(value || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
-}
 </script>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\WorkOrderRequest;
+use App\Http\Requests\WorkOrderStatusRequest;
 use App\Http\Resources\WorkOrderDetailResource;
 use App\Http\Resources\WorkOrderResource;
 use App\Models\WorkOrder;
@@ -73,35 +74,22 @@ class WorkOrderController extends Controller
         }
     }
 
-    public function start(Request $request, WorkOrder $workOrder)
+    public function changeStatus(WorkOrderStatusRequest $request, WorkOrder $workOrder)
     {
         try {
-            $order = $workOrder->startOrder($request->user()->id);
+            $status = (int) $request->validated('status');
+            $order = $workOrder->changeStatus($status, $request->user()->id);
+            $action = $status === 1 ? 'iniciada' : 'finalizada';
 
-            Log::channel(self::LOG_CHANNEL)->info('Orden de trabajo iniciada.', [
+            Log::channel(self::LOG_CHANNEL)->info("Orden de trabajo {$action}.", [
                 'user_id' => $request->user()->id,
                 'work_order_id' => $order->id,
+                'status_action' => $status,
             ]);
 
             return new WorkOrderDetailResource($order);
         } catch (Throwable $exception) {
-            return $this->errorResponse($exception, 'iniciar la orden');
-        }
-    }
-
-    public function close(Request $request, WorkOrder $workOrder)
-    {
-        try {
-            $order = $workOrder->closeOrder($request->user()->id);
-
-            Log::channel(self::LOG_CHANNEL)->info('Orden de trabajo cerrada.', [
-                'user_id' => $request->user()->id,
-                'work_order_id' => $order->id,
-            ]);
-
-            return new WorkOrderDetailResource($order);
-        } catch (Throwable $exception) {
-            return $this->errorResponse($exception, 'cerrar la orden');
+            return $this->errorResponse($exception, 'cambiar el estado de la orden');
         }
     }
 

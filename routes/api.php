@@ -190,8 +190,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [WorkOrderController::class, 'store'])->middleware('permission:maintenances.create');
             Route::get('{workOrder}', [WorkOrderController::class, 'show'])->middleware('permission:maintenances.view');
             Route::put('{workOrder}', [WorkOrderController::class, 'update'])->middleware('permission:maintenances.edit');
-            Route::post('{workOrder}/start', [WorkOrderController::class, 'start'])->middleware('permission:maintenances.change_state');
-            Route::post('{workOrder}/close', [WorkOrderController::class, 'close'])->middleware('permission:maintenances.change_state');
+            Route::post('{workOrder}/status', [WorkOrderController::class, 'changeStatus'])->middleware('permission:maintenances.change_state');
         });
 
         Route::prefix('purchase-orders')->group(function () {

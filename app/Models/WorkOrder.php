@@ -106,6 +106,13 @@ class WorkOrder extends Model
         return $this->fresh()->load(self::detailRelations());
     }
 
+    public function changeStatus(int $status, int $userId): self
+    {
+        return $status === 1
+            ? $this->startOrder($userId)
+            : $this->closeOrder($userId);
+    }
+
     public function closeOrder(int $userId): self
     {
         return DB::transaction(function () use ($userId) {
