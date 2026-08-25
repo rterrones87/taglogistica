@@ -35,7 +35,7 @@ class PurchaseOrderController extends Controller
             $data = array_merge($request->validated(), ['created_by' => $request->user()->id]);
             $order = PurchaseOrder::createRegister($data, $request->allFiles());
 
-            if (env('APP_ENV') != 'local') {
+            if (env('APP_ENV') != 'local_test') {
                 NotificationHelper::notifyAdministrators(
                     'Nueva orden de compra pendiente',
                     "Se requiere aprobar o rechazar la orden {$order->folio}.",

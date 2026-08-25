@@ -129,16 +129,6 @@ class PermissionsSeeder extends Seeder
             'diesel_costs.edit',
         ];
 
-        Permission::whereIn('name', [
-            'maintenance_new.view',
-            'maintenance_new.create_work_order',
-            'maintenance_new.edit_work_order',
-            'maintenance_new.start_work_order',
-            'maintenance_new.close_work_order',
-            'maintenance_new.create_purchase_order',
-            'maintenance_new.edit_purchase_order',
-        ])->delete();
-
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
