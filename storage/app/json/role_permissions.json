@@ -395,6 +395,7 @@
             "maintenances.change_state",
             "maintenances.delete",
             "maintenances.edit",
+            "maintenances.upload_evidence",
 
             "units.view",
             "units.consult",

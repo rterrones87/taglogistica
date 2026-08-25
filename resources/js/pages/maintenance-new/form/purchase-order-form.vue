@@ -304,7 +304,7 @@ const isEditing = computed(() => route.params.id && route.params.id !== 'new');
 const canEditPaymentCondition = computed(() => isEditing.value && hasPermission('maintenances.edit'));
 const canManageFiles = computed(() => isEditing.value
     ? hasPermission('maintenances.edit')
-    : hasPermission('maintenances.create'));
+    : hasPermission('maintenances.upload_evidence'));
 const canSave = computed(() => isEditing.value
     ? canEditPaymentCondition.value
     : hasPermission('maintenances.create'));
