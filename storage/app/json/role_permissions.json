@@ -179,33 +179,40 @@
         "role_id": 5,
         "role": "Mantenimiento",
         "permissions": [
+            "maintenances.view",
+            "maintenances.create",
+
+            "units.view",
+
             "inventories.create",
             "inventories.delete",
             "inventories.edit",
             "inventories.view",
-            "maintenances.cancel",
-            "maintenances.change_state",
-            "maintenances.create",
-            "maintenances.delete",
-            "maintenances.edit",
-            "maintenances.view",
-            "operators.consult",
-            "services.download",
-            "services.view",
-            "suppliers.create",
-            "suppliers.delete",
-            "suppliers.edit",
+
             "suppliers.view",
+
             "tires.create",
             "tires.delete",
             "tires.edit",
             "tires.view",
+
+            "services.view",
+            "services.request_diesel",
+
+            "maintenances.cancel",
+            "maintenances.change_state",
+            "maintenances.delete",
+            "maintenances.edit",
+            "operators.consult",
+            "services.download",
+            "suppliers.create",
+            "suppliers.delete",
+            "suppliers.edit",
             "units.consult",
             "units.create",
             "units.delete",
-            "units.edit",
-            "units.view",
-            "users.change_password"
+            "units.edit"
+
         ]
     },
     {
@@ -394,21 +401,41 @@
         "role_id": 12,
         "role": "Gerente de Mantenimiento",
         "permissions": [
+
+            "maintenances.view",
+            "maintenances.create",
+            "maintenances.cancel",
+            "maintenances.change_state",
+            "maintenances.delete",
+            "maintenances.edit",
+
+            "units.view",
+            "units.consult",
+            "units.create",
+            "units.delete",
+            "units.edit",
+
             "inventories.create",
             "inventories.delete",
             "inventories.edit",
             "inventories.view",
-            "maintenances.create",
-            "maintenances.edit",
-            "maintenances.view",
-            "services.request_diesel",
-            "services.view",
+
             "suppliers.view",
+            "suppliers.create",
+            "suppliers.delete",
+            "suppliers.edit",
+
             "tires.create",
             "tires.delete",
             "tires.edit",
             "tires.view",
-            "units.view"
+
+            "services.view",
+            "services.request_diesel",
+            "services.download",
+          
+            "operators.consult"
+
         ]
     }
 ]
