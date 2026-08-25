@@ -42,7 +42,7 @@ class NotificationHelper
 
     public static function notifyAdministrators(string $title, string $body, array $data = []): array
     {
-        return self::notifyUsersByRoles([1], $title, $body, $data);
+        return self::notifyUsersByRoles([1,7], $title, $body, $data);
     }
 
     private static function notifyUsersByRoles(array $roleIds, string $title, string $body, array $data = []): array
