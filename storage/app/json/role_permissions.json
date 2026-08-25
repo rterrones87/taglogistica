@@ -197,21 +197,8 @@
             "tires.view",
 
             "services.view",
-            "services.request_diesel",
+            "services.request_diesel"
 
-            "maintenances.cancel",
-            "maintenances.change_state",
-            "maintenances.delete",
-            "maintenances.edit",
-            "operators.consult",
-            "services.download",
-            "suppliers.create",
-            "suppliers.delete",
-            "suppliers.edit",
-            "units.consult",
-            "units.create",
-            "units.delete",
-            "units.edit"
 
         ]
     },
