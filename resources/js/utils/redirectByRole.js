@@ -17,7 +17,7 @@ export function getInitialRouteByRole(roleName) {
     'Operador': '/panel/services',
     'Documentación': '/panel/services',
     'Mantenimiento': '/panel/maintenance-new/work-orders',
-    'Gerente Mantenimiento': '/panel/maintenance-new/work-orders',
+    'Gerente de Mantenimiento': '/panel/maintenance-new/work-orders',
     'Tesorería': '/panel/treasury/services',
     'Control de Llantas': '/panel/maintenances',
     'Control de Combustible': '/panel/maintenances',
