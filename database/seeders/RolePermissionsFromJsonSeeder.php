@@ -21,7 +21,6 @@ class RolePermissionsFromJsonSeeder extends Seeder
         $items = json_decode($disk->get(self::FILE_PATH), true, 512, JSON_THROW_ON_ERROR);
 
         DB::transaction(function () use ($items) {
-
             //Primero actualizamos la tabla de permisos
             $permissionNames = collect($items)
                 ->pluck('permissions')
@@ -41,15 +40,15 @@ class RolePermissionsFromJsonSeeder extends Seeder
 
             $permissionsByName = Permission::query()
                 ->get()
-                ->keyBy(fn (Permission $permission) => strtolower($permission->name));
+                ->keyBy(fn (Permission $permission) => strtolower($permission->name))
+                ->toBase();
 
-            //Ahora actualizamos los roles y los permisos asociados a cada rol 
+            // Ahora actualizamos los roles y los permisos asociados a cada rol
             foreach ($items as $item) {
-
-                if($item['role_id'] === 1) {
-                    continue; // Saltar el rol de Administrador
+                if ($item['role_id'] == 1) {
+                    continue;
                 }
-                
+
                 DB::table('roles')->updateOrInsert(
                     ['id' => $item['role_id']],
                     [
@@ -71,14 +70,13 @@ class RolePermissionsFromJsonSeeder extends Seeder
                 $role->permissions()->sync($permissionIds);
             }
 
-            $administradores = Role::where('id', 1)->get(); 
-            foreach ($administradores as $administrador) {
+            $administrador = Role::find(1);
+
+            if ($administrador) {
                 $administrador->permissions()->sync(
-                    Permission::pluck('id')->toArray()
+                    Permission::query()->pluck('id')->all()
                 );
             }
-          
-
         });
 
         if ($this->command) {
