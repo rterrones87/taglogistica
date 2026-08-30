@@ -3,6 +3,7 @@ import { getInitialRouteByRole } from './utils/redirectByRole';
 
 // Importar los componentes de las páginas
 import Login from './pages/login.vue';
+import RequestAccess from './pages/request-access.vue';
 import Clients from './pages/clients.vue';
 import Services from './pages/services.vue';
 import Suppliers from './pages/suppliers.vue';
@@ -71,6 +72,7 @@ const hasPermission = (permission) => {
 };
 
 const routes = [
+    { path: '/solicitar-acceso', component: RequestAccess },
     { 
         path: '/', 
         redirect: () => {
@@ -197,4 +199,3 @@ router.beforeEach((to, from, next) => {
 
 
 export default router;
-

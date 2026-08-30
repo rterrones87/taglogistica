@@ -1,38 +1,26 @@
 <template>
-
-    <div class="login-screen">
-        <div class="login-backdrop" aria-hidden="true"></div>
-        <div class="login-card bg-white rounded shadow-md w-full max-w-[600px] flex justify-center overflow-hidden">
-            <div class="grow bg-[var(--primarycolor)] hidden md:block">
-
-            </div>
-            <div class="login-form p-6 sm:p-8">
-                <h2 class="text-3xl my-4 font-bold">Iniciar Sesión</h2>
-                <form @submit.prevent="login">
-                    <label class="form-item">
-                        <span>Correo</span>
-                        <input type="email" v-model="email" placeholder="Correo" autocomplete="username" required>
-                    </label>
-                    <label class="form-item">
-                        <span>Contraseña</span>
-                        <input type="password" v-model="password" placeholder="Contraseña" autocomplete="current-password" required>
-                    </label>
-                    <div class="flex justify-end">
-                        <FormAction
-                            title="Ingresar"
-                        />
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
+    <AuthLayout>
+        <h1>Te damos la bienvenida a TAG Logística</h1>
+        <p class="auth-subtitle">Inicia sesión para continuar</p>
+        <form class="auth-form" @submit.prevent="login">
+            <label class="auth-field">
+                <span>Correo electrónico</span>
+                <input type="email" v-model="email" placeholder="Correo electrónico" autocomplete="username" required>
+            </label>
+            <label class="auth-field">
+                <span>Contraseña</span>
+                <input type="password" v-model="password" placeholder="Contraseña" autocomplete="current-password" required>
+            </label>
+            <button class="auth-submit" type="submit">Ingresar</button>
+            <router-link class="auth-link access-request-link" to="/solicitar-acceso">Solicita tu acceso</router-link>
+        </form>
+    </AuthLayout>
 </template>
 
 <script setup>
 import { ref, inject } from 'vue';
 import { useRouter } from 'vue-router';
-import FormAction from '@/components/FormAction.vue';
+import AuthLayout from '../layouts/AuthLayout.vue';
 import { getInitialRouteByRole } from '../utils/redirectByRole';
 
 import axios from 'axios';
@@ -103,50 +91,8 @@ const login = async () => {
 </script>
 
 <style scoped>
-.login-screen {
-    position: fixed;
-    inset: 0;
-    isolation: isolate;
-    display: flex;
-    overflow-y: auto;
-    padding: 24px 16px;
-    background: #091b27;
-}
-
-.login-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background: url('../assets/login-background.png') center 58% / cover no-repeat;
-}
-
-.login-card {
-    flex-shrink: 0;
-    margin: auto;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 16px;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
-}
-
-.login-form {
-    width: 100%;
-    max-width: 400px;
-    min-width: 0;
-}
-
-@media (max-width: 767px) {
-    .login-backdrop {
-        background-image: url('../assets/login-background-mobile.jpeg');
-        background-position: center;
-    }
-
-    .login-card {
-        max-width: 400px;
-    }
-
-    .login-form input {
-        font-size: 16px;
-    }
+.access-request-link { display: block; text-align: center; margin-top: 20px; }
+@media (min-width: 768px) {
+    .access-request-link { display: none; }
 }
 </style>
