@@ -115,20 +115,10 @@ const login = async () => {
 
 .login-backdrop {
     position: fixed;
-    inset: -8px;
-    z-index: -2;
-    pointer-events: none;
-    background: url('../assets/login-background.png') center 58% / cover no-repeat;
-    filter: blur(2px);
-}
-
-.login-screen::before {
-    content: '';
-    position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.38), rgba(3, 12, 20, 0.62));
+    background: url('../assets/login-background.png') center 58% / cover no-repeat;
 }
 
 .login-card {
@@ -147,7 +137,8 @@ const login = async () => {
 
 @media (max-width: 767px) {
     .login-backdrop {
-        background-position: 38% center;
+        background-image: url('../assets/login-background-mobile.jpeg');
+        background-position: center;
     }
 
     .login-card {
@@ -159,4 +150,3 @@ const login = async () => {
     }
 }
 </style>
-
