@@ -69,7 +69,7 @@ class ServiceController extends Controller
                             ->get(); */
             
 
-                $query = Service::with(['client','operator','unit','state','substate','containers.place','cost','evidences'])
+                $query = Service::with(['client','operator','unit','state','substate','containers.place','cost','approvals','evidences'])
                     ->where('zombie', 0)
                     ->where('state_id', '>', 1)
                     ->where('state_id', '<', 5)
