@@ -90,7 +90,15 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'role_id' => 'required',
-            'email' => 'required|email'
+            'email' => 'required|email',
+            'password' => [
+                'nullable',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,15}$/',
+            ],
+        ], [
+            'password.regex' => 'La contraseña debe tener entre 8 y 15 caracteres, e incluir al menos una mayúscula, una minúscula, un número y un símbolo (@$!%*?&).',
         ]);
 
         
@@ -101,6 +109,13 @@ class UserController extends Controller
         }
         
         $data = $request->all();
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
+        }
+        unset($data['password_confirmation']);
 
         User::find($id)->update($data);
 

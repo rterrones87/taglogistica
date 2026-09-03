@@ -26,15 +26,25 @@
                     <p v-if="errors.email" class="text-red-500 text-sm">{{ errors.email[0] }}</p>
                 </div>
             </div>
-            <div v-if="item.id == null" class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <div class="form-item">
-                    <label>Contraseña:</label>
-                    <input v-model="item.password" type="password" required />
+                    <label for="user-password">Contraseña:</label>
+                    <input id="user-password" v-model="item.password" :type="showPassword ? 'text' : 'password'" autocomplete="new-password" :required="!isEditing" minlength="8" maxlength="15" aria-describedby="user-password-help" />
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <button type="button" class="form-button rounded" @click="createPassword">Crear password</button>
+                        <button type="button" class="text-sm underline text-dynamic-color" :aria-pressed="showPassword" @click="showPassword = !showPassword">
+                            {{ showPassword ? 'Ocultar' : 'Mostrar' }} contraseña
+                        </button>
+                    </div>
+                    <p id="user-password-help" class="text-gray-500 text-sm">
+                        <span v-if="isEditing">Deja este campo vacío para conservar la contraseña actual. </span>
+                        Usa de 8 a 15 caracteres con mayúscula, minúscula, número y símbolo (@$!%*?&).
+                    </p>
                     <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password[0] }}</p>
                 </div>
-                <div class="form-item">
+                <div v-if="!isEditing" class="form-item">
                     <label>Confirmar Contraseña:</label>
-                    <input v-model="item.password_confirmation" type="password" required />
+                    <input v-model="item.password_confirmation" type="password" autocomplete="new-password" required />
                 </div>
             </div>
             <div class="flex justify-end border-t mt-8 py-2">
@@ -53,6 +63,7 @@
     import breadcrumb from '../../components/breadcrumb.vue';
     import FormAction from '@/components/FormAction.vue';
     import axios from "axios";
+    import { generateUserPassword } from '../../utils/generateUserPassword';
 
     const props = defineProps({
         isModal: {
@@ -70,6 +81,7 @@
     });
 
     const roles = ref([]);
+    const showPassword = ref(false);
     const dialogs = inject("swal");
     const emit = defineEmits(['saved']);
 
@@ -81,10 +93,28 @@
         dialogs,
         ignoreRouteParams: props.isModal,
         onCreatedListener: () => {
+            item.value.password = '';
+            item.value.password_confirmation = '';
+            showPassword.value = false;
             emit('saved');
         },
         redirectOnCreate: props.isModal ? null : 'users'
     });
+
+    // El formulario nunca debe precargar una contraseña del usuario consultado.
+    watch(item, (loadedItem) => {
+        loadedItem.password = '';
+        loadedItem.password_confirmation = '';
+        showPassword.value = false;
+    });
+
+    const createPassword = () => {
+        item.value.password = generateUserPassword();
+        if (!isEditing.value) {
+            item.value.password_confirmation = item.value.password;
+        }
+        showPassword.value = true;
+    };
 
     // Watch para mantener role_id fijo cuando fixedRoleId está presente
     if (props.fixedRoleId !== null) {
@@ -117,4 +147,3 @@
         }
     }
 </script>
-  
