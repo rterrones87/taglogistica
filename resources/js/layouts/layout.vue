@@ -190,11 +190,6 @@ const rawMenuItems = [
         path: "/panel/treasury/maintenances",
         requiresPermission: 'treasury.view_maintenances'
       },
-      {
-        name: "Ordenes de compra",
-        path: "/panel/treasury/purchase-orders",
-        requiresPermission: 'treasury.view_purchase_orders'
-      },
       { 
         name: "Nóminas", 
         path: "/panel/treasury/nominas",

@@ -22,6 +22,20 @@ trait HasApproval
         ]);
     }
 
+    public function successApproval(string $kind, int $userId, ?array $snapshot = null, ?array $meta = null, ?int $scopeId = null): Approval {
+
+        return $this->approvals()->create([
+            'kind'         => $kind,
+            'scope_id'     => $scopeId,
+            'requested_by' => $userId,
+            'status'       => 'approved',
+            'snapshot'     => $snapshot,
+            'metadata'     => $meta,
+            'reviewed_at'  => now(),
+            'is_open'      => null
+        ]);
+    }
+
     public function approvalOf(string $kind, ?int $scopeId = null) {
         return $this->approvals()
             ->where('kind', $kind)

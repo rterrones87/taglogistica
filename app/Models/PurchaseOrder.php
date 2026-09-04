@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\NotificationHelper;
 use App\Support\GeneratesAnnualFolio;
 use App\Traits\HasApproval;
 use Illuminate\Database\Eloquent\Model;
@@ -34,6 +35,8 @@ class PurchaseOrder extends Model
         'treasury_accepted_at' => 'datetime',
     ];
 
+    public const COST_THRESHOLD_FOR_NOTIFICATION = 10000;
+
     public static function searchList(array $filters)
     {
         $query = self::query()->with(self::detailRelations())->latest('id');
@@ -59,14 +62,26 @@ class PurchaseOrder extends Model
             }
 
             $data['folio'] = GeneratesAnnualFolio::for(self::class, 'OC');
-            $data['status'] = 'Pendiente';
+            $data['status'] =  ($data['cost'] >= self::COST_THRESHOLD_FOR_NOTIFICATION ) ? 'Pendiente' : 'Aprobada';;
             $order = self::create($data);
-            $order->requestApproval('purchase_order', $data['created_by'], [
-                'Folio OC' => $order->folio,
-                'Folio OT' => $workOrder->folio,
-                'Costo con IVA' => number_format((float) $order->cost, 2, '.', ','),
-                'Descripcion' => $order->description,
-            ]);
+
+            $snapshot =  [
+                    'Folio OC' => $order->folio,
+                    'Folio OT' => $workOrder->folio,
+                    'Costo con IVA' => number_format((float) $order->cost, 2, '.', ','),
+                    'Descripcion' => $order->description,
+                ];
+
+            if($data['cost'] >= self::COST_THRESHOLD_FOR_NOTIFICATION){
+
+                $order->requestApproval('purchase_order', $data['created_by'], $snapshot);
+
+            }else{
+
+                $approval = $order->successApproval('purchase_order', $data['created_by'], $snapshot);
+                $order->onApproved($approval);
+
+            }
 
             return $order->addFiles($files);
         });
@@ -320,6 +335,19 @@ class PurchaseOrder extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function sendNotificationToApprover(){
+        //Solo se envian las notificacionees de ordenes de compra con costo mayor o igual a 10,000 pesos, 
+         //y no se envian en el ambiente de pruebas local
+        if (env('APP_ENV') != 'local_test' and $this->cost>=self::COST_THRESHOLD_FOR_NOTIFICATION) {
+            NotificationHelper::notifyAdministrators(
+                'Nueva orden de compra pendiente',
+                "Se requiere aprobar o rechazar la orden {$this->folio}.",
+                ['purchase_order_id' => (string) $this->id, 'folio' => $this->folio]
+            );
+        }
+
     }
 
     public function treasuryAcceptedBy()

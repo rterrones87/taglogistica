@@ -228,7 +228,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Aprobaciones
     Route::post('/approvals/{approval}/approve', [ApprovalController::class, 'approve'])
-->middleware('permission:approvals.approve')
+        ->middleware('permission:approvals.approve')
         ->name('approvals.approve');
     Route::post('/approvals/{approval}/reject', [ApprovalController::class, 'reject'])
         ->middleware('permission:approvals.reject')

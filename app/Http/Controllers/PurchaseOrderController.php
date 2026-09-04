@@ -32,17 +32,12 @@ class PurchaseOrderController extends Controller
     public function store(PurchaseOrderRequest $request)
     {
         try {
+
             $data = array_merge($request->validated(), ['created_by' => $request->user()->id]);
             $order = PurchaseOrder::createRegister($data, $request->allFiles());
 
-            if (env('APP_ENV') != 'local_test') {
-                NotificationHelper::notifyAdministrators(
-                    'Nueva orden de compra pendiente',
-                    "Se requiere aprobar o rechazar la orden {$order->folio}.",
-                    ['purchase_order_id' => (string) $order->id, 'folio' => $order->folio]
-                );
-            }
-
+            $order->sendNotificationToApprover();
+                       
             Log::channel(self::LOG_CHANNEL)->info('Orden de compra creada.', [
                 'user_id' => $request->user()->id,
                 'purchase_order_id' => $order->id,
@@ -50,8 +45,11 @@ class PurchaseOrderController extends Controller
             ]);
 
             return new PurchaseOrderResource($order);
+
         } catch (Throwable $exception) {
+
             return $this->errorResponse($exception, 'crear la orden');
+
         }
     }
 
