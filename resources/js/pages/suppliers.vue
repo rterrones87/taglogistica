@@ -5,7 +5,7 @@
         <div class="flex items-center">
             <h2 class="text-3xl my-4 font-bold grow text-center md:text-left">Proveedores</h2>
 
-            <div class="my-2 flex justify-end hidden md:block">
+            <div v-if="hasPermission('suppliers.create')" class="my-2 flex justify-end hidden md:block">
                 <GenericAction
                     title="Nuevo registro"
                     icon="add.png"
@@ -14,7 +14,11 @@
             </div>
         </div>
 
-        <router-link class="float-button block md:hidden" :to="{ path: 'supplier' }"></router-link>
+        <router-link
+            v-if="hasPermission('suppliers.create')"
+            class="float-button block md:hidden"
+            :to="{ path: 'supplier' }"
+        />
 
         <!-- DataTable Component -->
         <DataTable
@@ -23,14 +27,19 @@
             :onReload="loadItems"
             emptyMessage="No hay proveedores disponibles."
         >
-            <template #actions="{ row }">
+            <template
+                v-if="hasPermission('suppliers.edit') || hasPermission('suppliers.delete')"
+                #actions="{ row }"
+            >
                 <div class="flex justify-center flex-col md:flex-row">
                     <TableAction
+                        v-if="hasPermission('suppliers.edit')"
                         title="Editar"
                         icon="edit.png"
                         :route="`supplier/${row.id}`"
                     />
                     <TableAction
+                        v-if="hasPermission('suppliers.delete')"
                         title="Eliminar"
                         icon="delete.png"
                         @click.prevent="deleteItem(row.id)"
@@ -48,8 +57,10 @@ import breadcrumb from '../components/breadcrumb.vue';
 import DataTable from '@/components/DataTable.vue';
 import TableAction from '@/components/TableAction.vue';
 import GenericAction from '@/components/GenericAction.vue';
+import { usePermissions } from '../composables/usePermissions';
 
 const dialogs = inject("swal");
+const { hasPermission } = usePermissions();
 
 const { items, deleteItem, loadItems } = actionslist({
     endpoint: 'suppliers',

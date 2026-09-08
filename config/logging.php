@@ -70,6 +70,34 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 30,
         ],
+
+        'order-work' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/order-work/order-work.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'purchase-order' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/purchase-order/purchase-order.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'treasury-purchase-order' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/treasury-purchase-order/treasury-purchase-order.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
+
+        'maintenance-catalog' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/maintenance-catalog/maintenance-catalog.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+        ],
     ],
 
 ];

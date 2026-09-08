@@ -22,3 +22,5 @@ public/vendor
 storage/keys/
 
 public/tag-logistica-firebase-adminsdk-fbsvc-197af33b22.json
+/graphify-out
+/AGENTS.md

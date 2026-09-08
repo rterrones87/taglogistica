@@ -282,6 +282,8 @@ const formatActionName = (action) => {
         'view_payments': 'Ver Pagos',
         'change_state': 'Cambiar Estado',
         'view_maintenances': 'Ver Mantenimientos',
+        'view_purchase_orders': 'Ver Ordenes de Compra',
+        'accept_purchase_orders': 'Aceptar Ordenes de Compra',
         'view_services': 'Ver Viajes',
         'apply_payment': 'Aplicar Pago',
         'init_expenses': 'Gastos Iniciales',

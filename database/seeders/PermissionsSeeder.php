@@ -59,7 +59,7 @@ class PermissionsSeeder extends Seeder
             'maintenances.delete',
             'maintenances.change_state',
             'maintenances.upload_evidence',
-            
+
             // Inventarios
             'inventories.view',
             'inventories.create',
@@ -100,6 +100,8 @@ class PermissionsSeeder extends Seeder
             'treasury.upload_evidence',
             'treasury.init_expenses',
             'treasury.ext_expenses',
+            'treasury.view_purchase_orders',
+            'treasury.accept_purchase_orders',
             
             // Aprobaciones
             'approvals.view',

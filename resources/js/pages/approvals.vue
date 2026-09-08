@@ -424,7 +424,24 @@ const getApprovalDetails = async (kind, scope_id, approvable_id) => {
 
     ////initial_diesel_required, maintenance_expenses, extra_expenses
 
-    if(kind == 'maintenance_expenses')
+    if (kind === 'purchase_order')
+    {
+        const response = await axios.get(`maintenance-new/purchase-orders/${approvable_id}`);
+        const order = response.data.data;
+
+        dialogs.close();
+        costs.value = {};
+        maintenances.value = {};
+        details.value = [
+          {id: 1, title: 'Folio OC:', description: order.folio},
+          {id: 2, title: 'Folio OT:', description: order.work_order?.folio || 'N/A'},
+          {id: 3, title: 'Unidad:', description: order.work_order?.unit?.econame || 'N/A'},
+          {id: 4, title: 'Proveedor:', description: order.supplier?.name || 'N/A'},
+          {id: 5, title: 'Descripcion:', description: order.description},
+          {id: 6, title: 'Costo con IVA:', description: '$' + Number(order.cost || 0).toFixed(2)},
+        ];
+    }
+    else if(kind == 'maintenance_expenses')
     {
         var {data} = await axios.get(`maintenances/${scope_id}`);
 

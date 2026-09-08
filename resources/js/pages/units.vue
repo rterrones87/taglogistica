@@ -5,7 +5,7 @@
         <div class="flex items-center">
             <h2 class="text-3xl my-4 font-bold grow text-center md:text-left">Unidades</h2>
 
-            <div class="my-2 flex justify-end hidden md:block">
+            <div v-if="hasPermission('units.create')" class="my-2 flex justify-end hidden md:block">
                 <GenericAction
                     title="Nuevo registro"
                     icon="add.png"
@@ -14,7 +14,11 @@
             </div>
         </div>
         
-        <router-link class="float-button block md:hidden" :to="{ path: 'unit' }"></router-link>
+        <router-link
+            v-if="hasPermission('units.create')"
+            class="float-button block md:hidden"
+            :to="{ path: 'unit' }"
+        />
 
         <!-- DataTable Component -->
         <DataTable
@@ -23,14 +27,19 @@
             :onReload="loadItems"
             emptyMessage="No hay unidades disponibles."
         >
-            <template #actions="{ row }">
+            <template
+                v-if="hasPermission('units.edit') || hasPermission('units.delete')"
+                #actions="{ row }"
+            >
                 <div class="flex justify-center flex-col md:flex-row">
                     <TableAction
+                        v-if="hasPermission('units.edit')"
                         title="Editar"
                         icon="edit.png"
                         :route="`unit/${row.id}`"
                     />
                     <TableAction
+                        v-if="hasPermission('units.delete')"
                         title="Eliminar"
                         icon="delete.png"
                         @click.prevent="deleteItem(row.id)"
@@ -49,8 +58,10 @@ import breadcrumb from '../components/breadcrumb.vue';
 import DataTable from '@/components/DataTable.vue';
 import TableAction from '@/components/TableAction.vue';
 import GenericAction from '@/components/GenericAction.vue';
+import { usePermissions } from '../composables/usePermissions';
 
 const dialogs = inject("swal");
+const { hasPermission } = usePermissions();
 
 const { items, deleteItem, loadItems } = actionslist({
     endpoint: 'units',

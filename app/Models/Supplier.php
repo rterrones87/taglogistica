@@ -24,4 +24,11 @@ class Supplier extends Model
         'invoice_required',
         'zombie'
     ];
+
+    public static function searchList(array $filters)
+    {
+        $query = self::query()->where('active', 1)->where('zombie', 0)->orderBy('name');
+
+        return $query->get($filters['columns'] ?? ['*']);
+    }
 }

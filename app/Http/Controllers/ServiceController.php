@@ -279,7 +279,7 @@ class ServiceController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(ServiceRequest $request, ApprovalService $approvalService , $id)
+    public function update(ServiceRequest $request, $id)
     {
         $user = Auth::user();
 
@@ -382,7 +382,7 @@ class ServiceController extends Controller
                                 'description'         => 'Diesel auxiliar: ' . $type->name,
                             ]);
 
-                            $approvalId = $service->requestApproval(
+                            $service->requestApproval(
                                 kind:     'extra_diesel',
                                 userId:   auth()->id(),
                                 snapshot: $service->snapshotForExtraDiesel(
@@ -393,16 +393,10 @@ class ServiceController extends Controller
                                 scopeId:  $auxDiesel->id,
                             );
 
-                            $approvalService->approve(
-                                $approvalId,
-                                auth()->id(),
-                                'Aprobación automática de diesel'
+                            NotificationHelper::notifyAdmins(
+                                'Nueva solicitud de Diesel Extra',
+                                'Operador auxiliar ' . $type->name . ': ' . $operator->name . ' (' . $service->folio . ')'
                             );
-
-                            // NotificationHelper::notifyAdmins(
-                            //     'Nueva solicitud de Diesel Extra',
-                            //     'Operador auxiliar ' . $type->name . ': ' . $operator->name . ' (' . $service->folio . ')'
-                            // );
                         }
                     }
                 }
@@ -433,19 +427,13 @@ class ServiceController extends Controller
                     'Se requiere de su aprobación ('. $service->folio .')'
                 );
 
-                $approvalId = $service->requestApproval(
+                $service->requestApproval(
                     kind: 'initial_diesel_required',
                     userId: $service->initial_diesel_filled_by ?? auth()->id(),
                     snapshot: $service->snapshotForInitialDieselRequired(),
                     meta: [],
                     scopeId: $service->id
                 );
-
-                $approvalService->approve(
-                                $approvalId,
-                                auth()->id(),
-                                'Aprobación automática de diesel'
-                            );
             }
 
             if ($hasMainOperator) {
@@ -455,24 +443,18 @@ class ServiceController extends Controller
                     !isset($data['diesel']) && // No se está asignando diesel en esta misma actualización
                     !$service->hasApprovalPendingOrApproved('initial_diesel_required')
                 ) {
-                    // NotificationHelper::notifyAdmins(
-                    //     'Nueva solicitud de Diesel',
-                    //     'Se requiere de su aprobación ('. $service->folio .')'
-                    // );
+                    NotificationHelper::notifyAdmins(
+                        'Nueva solicitud de Diesel',
+                        'Se requiere de su aprobación ('. $service->folio .')'
+                    );
 
-                    $approvalId = $service->requestApproval(
+                    $service->requestApproval(
                         kind: 'initial_diesel_required',
                         userId: $service->initial_diesel_filled_by ?? auth()->id(),
                         snapshot: $service->snapshotForInitialDieselRequired(),
                         meta: [],
                         scopeId: $service->id
                     );
-
-                    $approvalService->approve(
-                                $approvalId,
-                                auth()->id(),
-                                'Aprobación automática de diesel'
-                            );
                 }
 
                 // Los gastos iniciales ahora se capturan en estado Programado (state 2)

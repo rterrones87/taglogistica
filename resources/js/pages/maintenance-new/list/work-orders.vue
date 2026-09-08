@@ -1,0 +1,80 @@
+<template>
+    <breadcrumb :items="breadcrumbItems" />
+
+    <div class="m-4 rounded bg-white p-4 shadow-md">
+        <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center">
+            <h2 class="grow text-3xl font-bold">Ordenes de trabajo</h2>
+
+            <router-link
+                v-if="hasPermission('maintenances.create')"
+                to="/panel/maintenance-new/work-orders/new"
+                class="rounded bg-[#18364a] px-4 py-2 text-center text-white"
+            >
+                Nueva orden
+            </router-link>
+        </div>
+
+        <div v-if="isLoading" class="flex min-h-[320px] items-center justify-center">
+            <div class="flex flex-col items-center gap-3 text-gray-600">
+                <span class="h-10 w-10 animate-spin rounded-full border-4 border-[#18364a] border-t-transparent"></span>
+
+                <span>Cargando órdenes de trabajo...</span>
+            </div>
+        </div>
+
+        <DataTable
+            v-else
+            :data="items"
+            :columns="columns"
+            :onReload="loadItems"
+            emptyMessage="No hay ordenes de trabajo registradas."
+        >
+            <template #actions="{ row }">
+                <TableAction
+                    title="Ver detalle"
+                    icon="edit.png"
+                    :route="`/panel/maintenance-new/work-orders/${row.id}`"
+                />
+            </template>
+        </DataTable>
+    </div>
+</template>
+
+<script setup>
+import { inject, onMounted, ref } from 'vue';
+import { getWorkOrdersApi } from '../../../apis/OrderWorkApi';
+import breadcrumb from '../../../components/breadcrumb.vue';
+import DataTable from '../../../components/DataTable.vue';
+import TableAction from '../../../components/TableAction.vue';
+import { usePermissions } from '../../../composables/usePermissions';
+import {
+    workOrderBreadcrumbItems,
+    workOrderColumns,
+} from '../config/workOrderList';
+
+const breadcrumbItems = workOrderBreadcrumbItems;
+const columns = workOrderColumns;
+
+const items = ref([]);
+const isLoading = ref(false);
+const dialogs = inject('swal');
+const { hasPermission } = usePermissions();
+
+onMounted(loadItems);
+
+async function loadItems() {
+    try {
+        isLoading.value = true;
+        const response = await getWorkOrdersApi();
+        items.value = response.data;
+    } catch (error) {
+        dialogs.fire(
+            'Error',
+            error.response?.data?.message || 'No fue posible consultar las órdenes de trabajo.',
+            'error',
+        );
+    } finally {
+        isLoading.value = false;
+    }
+}
+</script>

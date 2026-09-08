@@ -37,12 +37,22 @@ class NotificationHelper
      */
     public static function notifyAdmins(string $title, string $body, array $data = []): array
     {
+        return self::notifyUsersByRoles([1, 7], $title, $body, $data);
+    }
+
+    public static function notifyAdministrators(string $title, string $body, array $data = []): array
+    {
+        return self::notifyUsersByRoles([1,7], $title, $body, $data);
+    }
+
+    private static function notifyUsersByRoles(array $roleIds, string $title, string $body, array $data = []): array
+    {
         $fcmService = app(FcmService::class);
         
         // Consultar usuarios Administrador (1) y Dirección (7)
         $users = User::where('zombie', 0)
             ->where('active', 1)
-            ->whereIn('role_id', [1, 7])
+            ->whereIn('role_id', $roleIds)
             ->whereNotNull('fcm_token')
             ->get();
         

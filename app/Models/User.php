@@ -50,6 +50,17 @@ use HasApiTokens, HasFactory, Notifiable;
         'email_verified_at' => 'datetime',
     ];
 
+    public static function searchList(array $filters)
+    {
+        $query = self::query()->where('active', 1)->where('zombie', 0)->orderBy('name');
+
+        if (!empty($filters['role_id'])) {
+            $query->where('role_id', $filters['role_id']);
+        }
+
+        return $query->get($filters['columns'] ?? ['*']);
+    }
+
     public function role()
     {
         return $this->belongsTo(Role::class)->with('permissions');
