@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class RolePermissionsFromJsonSeeder extends Seeder
 {
-    private const FILE_PATH = 'public/json/role_permissions.json';
+    private const FILE_PATH = 'json/role_permissions.json';
 
     /**
      * Run the database seeds.
