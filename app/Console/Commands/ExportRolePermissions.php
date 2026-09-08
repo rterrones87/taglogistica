@@ -14,7 +14,7 @@ class ExportRolePermissions extends Command
      * @var string
      */
     protected $signature = 'roles:export-permissions
-                            {--path=json/role_permissions.json : Ruta relativa dentro de storage/app}';
+                            {--path=public/json/role_permissions.json : Ruta relativa dentro de storage/app}';
 
     /**
      * The console command description.
