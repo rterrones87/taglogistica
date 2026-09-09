@@ -10,8 +10,8 @@ import "@vuepic/vue-datepicker/dist/main.css";
 import swalPlugin from "./plugins/dialogs";
 import permissionDirective from "./directives/permission";
 
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || "/api/";
 
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || "/api/";
 //axios.defaults.withCredentials = true
 
 // Interceptor para agregar el token en cada petición
