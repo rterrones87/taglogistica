@@ -62,6 +62,7 @@ class PurchaseOrder extends Model
             }
 
             $data['folio'] = GeneratesAnnualFolio::for(self::class, 'OC');
+            $data['payment_condition'] = $data['payment_condition'] ?? 'Contado';
             $data['status'] =  ($data['cost'] >= self::COST_THRESHOLD_FOR_NOTIFICATION ) ? 'Pendiente' : 'Aprobada';;
             $order = self::create($data);
 
@@ -122,7 +123,7 @@ class PurchaseOrder extends Model
                 }
 
                 $order->update([
-                    'payment_condition' => $data['payment_condition'] ?? null,
+                    'payment_condition' => $data['payment_condition'] ?? 'Contado',
                     'credit_days' => ($data['payment_condition'] ?? null) === 'Credito'
                         ? $data['credit_days']
                         : null,

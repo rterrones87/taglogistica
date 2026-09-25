@@ -18,6 +18,12 @@ export const treasuryMaintenanceColumns = [
     { key: 'purchase_order.supplier.name', label: 'Proveedor', filterable: true },
     { key: 'purchase_order.cost', label: 'Costo con IVA', formatter: formatCurrency },
     { key: 'status', label: 'Estado', filterable: true },
+    {
+        key: 'purchase_order.payment_condition',
+        label: 'Condición de pago',
+        filterable: true,
+        formatter: (value, row) => paymentCondition(row.purchase_order),
+    },
     { key: 'created_at', label: 'Fecha de aprobación', formatter: formatDate },
 ];
 
@@ -63,7 +69,7 @@ export function downloadTreasuryMaintenancesPdf(items, currentTab) {
 }
 
 export function paymentCondition(order) {
-    if (!order?.payment_condition) return 'Por confirmar';
+    if (!order?.payment_condition) return 'Contado';
 
     return order.payment_condition === 'Credito' && order.credit_days
         ? `Crédito (${order.credit_days} días)`

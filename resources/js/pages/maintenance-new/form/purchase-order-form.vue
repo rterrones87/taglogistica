@@ -72,7 +72,6 @@
                             <label>Condicion de pago</label>
 
                             <select v-model="item.payment_condition" :disabled="isEditing && !canEditPaymentCondition">
-                                <option :value="null">Por confirmar</option>
                                 <option>Contado</option>
                                 <option>Credito</option>
                             </select>
@@ -351,6 +350,7 @@ onMounted(async () => {
 
             Object.assign(catalogs, catalogData);
             Object.assign(item, response.data);
+            item.payment_condition = item.payment_condition || 'Contado';
         } else {
             Object.assign(catalogs, await getWorkshopCatalogsApi());
         }

@@ -6,7 +6,7 @@ export const MAX_EVIDENCE_FILES = 5;
  * @property {number|string} supplier_id
  * @property {string} description
  * @property {number|string} cost
- * @property {string|null} payment_condition
+ * @property {string} payment_condition
  * @property {number|null} credit_days
  */
 
@@ -22,7 +22,7 @@ export function createPurchaseOrderForm(workOrderId = '') {
         supplier_id: '',
         description: '',
         cost: '',
-        payment_condition: null,
+        payment_condition: 'Contado',
         credit_days: null,
     };
 }
