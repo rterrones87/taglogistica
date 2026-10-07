@@ -279,7 +279,7 @@ class ServiceController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(ServiceRequest $request, $id)
+    public function update(ServiceRequest $request, ApprovalService $approvalService, $id)
     {
         $user = Auth::user();
 
@@ -382,7 +382,7 @@ class ServiceController extends Controller
                                 'description'         => 'Diesel auxiliar: ' . $type->name,
                             ]);
 
-                            $service->requestApproval(
+                            $approvalId = $service->requestApproval(
                                 kind:     'extra_diesel',
                                 userId:   auth()->id(),
                                 snapshot: $service->snapshotForExtraDiesel(
@@ -391,6 +391,12 @@ class ServiceController extends Controller
                                 ),
                                 meta:     [],
                                 scopeId:  $auxDiesel->id,
+                            );
+
+                            $approvalService->approve(
+                                $approvalId,
+                                auth()->id(),
+                                'Aprobación automática de diesel'
                             );
 
                             NotificationHelper::notifyAdmins(
@@ -427,12 +433,18 @@ class ServiceController extends Controller
                     'Se requiere de su aprobación ('. $service->folio .')'
                 );
 
-                $service->requestApproval(
+                $approvalId = $service->requestApproval(
                     kind: 'initial_diesel_required',
                     userId: $service->initial_diesel_filled_by ?? auth()->id(),
                     snapshot: $service->snapshotForInitialDieselRequired(),
                     meta: [],
                     scopeId: $service->id
+                );
+
+                $approvalService->approve(
+                    $approvalId,
+                    auth()->id(),
+                    'Aprobación automática de diesel'
                 );
             }
 
@@ -448,12 +460,18 @@ class ServiceController extends Controller
                         'Se requiere de su aprobación ('. $service->folio .')'
                     );
 
-                    $service->requestApproval(
+                    $approvalId = $service->requestApproval(
                         kind: 'initial_diesel_required',
                         userId: $service->initial_diesel_filled_by ?? auth()->id(),
                         snapshot: $service->snapshotForInitialDieselRequired(),
                         meta: [],
                         scopeId: $service->id
+                    );
+
+                    $approvalService->approve(
+                        $approvalId,
+                        auth()->id(),
+                        'Aprobación automática de diesel'
                     );
                 }
 
