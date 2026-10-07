@@ -23,7 +23,7 @@
                     <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
 
                         <div class="form-item">
-                            <label>Tipo de unidad *</label>
+                            <label>Tipo de servicio *</label>
 
                             <select v-model="item.unit_category" required>
                                 <option value="">Seleccione</option>
@@ -306,7 +306,8 @@ async function save() {
         }
 
         dialogs.fire('Excelente', 'Orden guardada correctamente', 'success');
-        router.push('/panel/maintenance-new/work-orders');
+        router.replace('/panel/maintenance-new/work-orders/new');
+        Object.assign(item, createWorkOrderForm());
     } catch (error) {
         errors.value = error.response?.data?.errors || {};
         dialogs.fire('Error', error.response?.data?.message || 'Revise los campos', 'error');
@@ -338,6 +339,11 @@ async function changeState(status) {
 
 function formatDateTime(value) {
     return value ? new Date(value).toLocaleString('es-MX') : '';
+}
+
+function resetForm() {
+    Object.assign(item, createWorkOrderForm());
+    errors.value = {};
 }
 
 </script>
