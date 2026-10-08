@@ -299,15 +299,16 @@ async function save() {
         if (item.work_type === 'Externo') item.mechanic_id = null;
         if (!vehicleCategory.value) item.maintenance_type = null;
 
+        let order;
         if (isEditing.value) {
-            await updateWorkOrderApi(item.id, item);
+            order = await updateWorkOrderApi(item.id, item);
         } else {
-            await createWorkOrderApi(item);
+            order = await createWorkOrderApi(item);
         }
 
         dialogs.fire('Excelente', 'Orden guardada correctamente', 'success');
-        router.replace('/panel/maintenance-new/work-orders/new');
-        Object.assign(item, createWorkOrderForm());
+        router.push(`/panel/maintenance-new/work-orders/${order.id}`); 
+
     } catch (error) {
         errors.value = error.response?.data?.errors || {};
         dialogs.fire('Error', error.response?.data?.message || 'Revise los campos', 'error');
