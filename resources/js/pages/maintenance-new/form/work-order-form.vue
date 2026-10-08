@@ -14,7 +14,7 @@
 
         <form class="space-y-6" @submit.prevent="save">
             <fieldset
-                
+
                 class="space-y-6 "
             >
                 <section>
@@ -220,7 +220,7 @@
 </template>
 
 <script setup>
-import { computed, inject, onMounted, reactive, ref } from 'vue';
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getWorkshopCatalogsApi } from '../../../apis/WorkshopCatalogApi';
 import {
@@ -287,6 +287,27 @@ onMounted(async () => {
         isLoadingPurchaseOrders.value = false;
     }
 });
+
+watch(
+    () => route.params.id,
+    async (newId, oldId) => {
+        if (newId === oldId) return;
+
+        if (newId && newId !== 'new') {
+            isLoadingPurchaseOrders.value = true;
+
+            try {
+                const response = await getWorkOrderDetailApi(newId);
+                Object.assign(item, response.data);
+            } catch (error) {
+                dialogs.fire('Error', error.response?.data?.message || 'No fue posible cargar la orden', 'error');
+                router.push('/panel/maintenance-new/work-orders');
+            } finally {
+                isLoadingPurchaseOrders.value = false;
+            }
+        }
+    }
+);
 
 async function save() {
     if (isSaving.value) return;
