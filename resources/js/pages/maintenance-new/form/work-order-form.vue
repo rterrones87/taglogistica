@@ -237,7 +237,6 @@ import { usePermissions } from '../../../composables/usePermissions';
 import {
     createWorkOrderForm,
     createWorkshopCatalogs,
-    formatCurrency,
     purchaseOrderColumns,
     vehicleCategories,
     workOrderCategories,
@@ -307,7 +306,7 @@ async function save() {
         }
 
         dialogs.fire('Excelente', 'Orden guardada correctamente', 'success');
-        router.push(`/panel/maintenance-new/work-orders/${order.id}`); 
+        router.push(`/panel/maintenance-new/work-orders/${order.data.id}`); 
 
     } catch (error) {
         errors.value = error.response?.data?.errors || {};
