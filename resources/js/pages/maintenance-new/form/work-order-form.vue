@@ -469,12 +469,28 @@ async function removeFile(file) {
 function buildUpdateFormData() {
     const formData = new FormData();
 
-    evidences.value.forEach((file) => formData.append('evidences[]', file.file));
+    // 1. Añadir TODOS los campos de texto obligatorios y opcionales
+    formData.append('unit_category', item.unit_category ?? '');
+    formData.append('unit_id', item.unit_id ?? '');
+    formData.append('initial_mileage', item.initial_mileage ?? '');
+    formData.append('opened_at', item.opened_at ?? '');
+    formData.append('operator_id', item.operator_id ?? '');
+    formData.append('failure_description', item.failure_description ?? '');
+    formData.append('work_type', item.work_type ?? '');
+    
+    if (item.mechanic_id) formData.append('mechanic_id', item.mechanic_id);
+    if (item.maintenance_type) formData.append('maintenance_type', item.maintenance_type);
+
+    // 2. Añadir evidencias y archivos eliminados
+    evidences.value.forEach((file) => {
+        if (file.file) formData.append('evidences[]', file.file);
+    });
     deletedFileIds.value.forEach((id) => formData.append('deleted_file_ids[]', id));
+
+    formData.append('_method', 'PUT');
 
     return formData;
 }
-
 
 async function save() {
     if (isSaving.value) return;
