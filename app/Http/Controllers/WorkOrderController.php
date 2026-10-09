@@ -61,7 +61,11 @@ class WorkOrderController extends Controller
     public function update(WorkOrderRequest $request, WorkOrder $workOrder)
     {
         try {
-            $order = $workOrder->updateRegister($request->validated(),request->allFiles());
+            $order = $workOrder->updateRegister(
+                $request->validated(),
+                $request->allFiles(),
+                $request->input('deleted_file_ids', [])
+            );
 
             Log::channel(self::LOG_CHANNEL)->info('Orden de trabajo actualizada.', [
                 'user_id' => $request->user()->id,

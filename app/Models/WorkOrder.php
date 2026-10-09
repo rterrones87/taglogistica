@@ -98,23 +98,65 @@ class WorkOrder extends Model
             throw new UnprocessableEntityHttpException('Una orden cerrada no puede editarse.');
         }
 
+        $storedFiles = [];
+        $deletedFiles = [];
+
         $data['mechanic_id'] = $data['work_type'] === 'Externo' ? null : ($data['mechanic_id'] ?? null);
 
-        return DB::transaction(function () use ($data, $files, $deletedFileIds) {
+        try {
+            $order = DB::transaction(function () use ($data, $files, $deletedFileIds, &$storedFiles, &$deletedFiles) {
+                $order = self::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+                $order->load('files');
 
-            // 1. Actualizar datos de la orden (quitando campos que no son columnas de la tabla)
-            $this->update(collect($data)->except(['deleted_file_ids', 'evidences'])->toArray());
+                // 1. Actualizar datos de texto de la orden
+                $order->update(collect($data)->except(['deleted_file_ids', 'evidences'])->toArray());
 
-            // 2. Eliminar archivos seleccionados si existen
-            if (!empty($deletedFileIds)) {
-                $this->deleteFiles($deletedFileIds);
-            }
+                // 2. Procesar archivos eliminados
+                $deletedFileIds = array_values(array_unique(array_map('intval', $deletedFileIds)));
+                $filesToDelete = $order->files->whereIn('id', $deletedFileIds);
 
-            // 3. Agregar nuevas evidencias
-            $this->addFiles($files);
+                if ($filesToDelete->count() !== count($deletedFileIds)) {
+                    throw new UnprocessableEntityHttpException('Uno de los archivos no pertenece a la orden de trabajo.');
+                }
 
-            return $this->fresh()->load(self::detailRelations());
-        });
+                $remainingFiles = $order->files->whereNotIn('id', $deletedFileIds);
+                $evidences = array_values($files['evidences'] ?? []);
+
+                if ($remainingFiles->count() + count($evidences) > 5) {
+                    throw new UnprocessableEntityHttpException('La orden de trabajo admite un máximo de 5 evidencias.');
+                }
+
+                foreach ($filesToDelete as $fileToDelete) {
+                    $deletedFiles[] = [
+                        'disk' => FileWorkOrder::DISK_FILE,
+                        'name' => $fileToDelete->url,
+                    ];
+                    $fileToDelete->delete();
+                }
+
+                // 3. Procesar nuevas evidencias
+                foreach ($evidences as $evidence) {
+                    if (! $evidence instanceof UploadedFile) {
+                        continue;
+                    }
+
+                    $filename = FileWorkOrder::storeFile($evidence, $storedFiles);
+                    
+                    $order->files()->create([
+                        'url' => $filename,
+                    ]);
+                }
+
+                return $order->fresh()->load(self::detailRelations());
+            });
+        } catch (Throwable $exception) {
+            self::deleteFiles($storedFiles);
+            throw $exception;
+        }
+
+        self::deleteFiles($deletedFiles);
+
+        return $order;
     }
 
     public function startOrder(int $userId): self
@@ -204,7 +246,7 @@ class WorkOrder extends Model
         }
     }
 
-    public function deleteFiles(array $files): void
+    public static function deleteFiles(array $files): void
     {
         foreach ($files as $file) {
             Storage::disk($file['disk'])->delete($file['name']);
