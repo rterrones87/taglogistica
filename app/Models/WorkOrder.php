@@ -6,6 +6,9 @@ use App\Support\GeneratesAnnualFolio;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Throwable;
+use Illuminate\Http\UploadedFile;
+
 
 class WorkOrder extends Model
 {
@@ -34,48 +37,54 @@ class WorkOrder extends Model
         'closed_at' => 'datetime',
     ];
 
-    public static function searchList(array $filters)
+    private static function detailRelations(): array
     {
-        $query = self::query()
-            ->with(['unit:id,econame', 'mechanic:id,name'])
-            ->withCount([
-                'purchaseOrders as purchase_orders_count' => fn ($query) => $query->where('status', 'Aprobada'),
-            ])
-            ->withSum([
-                'purchaseOrders as purchase_orders_sum_cost' => fn ($query) => $query->where('status', 'Aprobada'),
-            ], 'cost')
-            ->latest('id');
-
-        if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        if (! empty($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function ($builder) use ($search) {
-                $builder->where('folio', 'like', "%{$search}%")
-                    ->orWhereHas('unit', function ($unitQuery) use ($search) {
-                        $unitQuery->where('econame', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        if (! empty($filters['only_open'])) {
-            $query->where('status', '!=', 'Finalizado');
-        }
-
-        return $query->get();
+        return [
+            'startedBy:id,name',
+            'closedBy:id,name',
+            'purchaseOrders:id,work_order_id,supplier_id,folio,description,cost,status',
+            'purchaseOrders.supplier:id,name',
+        ];
     }
 
-    public static function createRegister(array $data): self
+    public function unit()
     {
-        return DB::transaction(function () use ($data) {
-            $data['mechanic_id'] = $data['work_type'] === 'Externo' ? null : ($data['mechanic_id'] ?? null);
-            $data['folio'] = GeneratesAnnualFolio::for(self::class, 'OT');
-            $order = self::create($data);
+        return $this->belongsTo(Unit::class);
+    }
 
-            return $order->load(self::detailRelations());
-        });
+    public function operator()
+    {
+        return $this->belongsTo(User::class, 'operator_id');
+    }
+
+    public function mechanic()
+    {
+        return $this->belongsTo(User::class, 'mechanic_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function startedBy()
+    {
+        return $this->belongsTo(User::class, 'started_by');
+    }
+
+    public function closedBy()
+    {
+        return $this->belongsTo(User::class, 'closed_by');
+    }
+
+    public function purchaseOrders()
+    {
+        return $this->hasMany(PurchaseOrder::class, 'work_order_id');
+    }
+
+    public function files()
+    {
+        return $this->hasMany(FileWorkOrder::class)->orderBy('id');
     }
 
     public function detail(): self
@@ -131,49 +140,102 @@ class WorkOrder extends Model
             return $order->fresh()->load(self::detailRelations());
         });
     }
-
-    private static function detailRelations(): array
+    
+    public function getEvidencesWorkOrders()
     {
-        return [
-            'startedBy:id,name',
-            'closedBy:id,name',
-            'purchaseOrders:id,work_order_id,supplier_id,folio,description,cost,status',
-            'purchaseOrders.supplier:id,name',
-        ];
+        $files = $this->files()->get();
+
+        $evidences = $files->values()->each(
+            fn ($file, $index) => $file->setAttribute('evidence_number', $index + 1)
+        );
+        
+        return $evidences;
     }
 
-    public function unit()
+    public function addFiles(array $files): self
     {
-        return $this->belongsTo(Unit::class);
+        $storedFiles = [];
+
+        try {
+            return DB::transaction(function () use ($files, &$storedFiles) {
+                $order = self::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+                $order->load('files');
+
+                $evidences = array_values($files['evidences'] ?? []);
+
+                if ($order->evidenceFiles->count() + count($evidences) > 5) {
+                    throw new UnprocessableEntityHttpException('La orden de compra admite un maximo de 5 evidencias.');
+                }
+
+                foreach ($evidences as $evidence) {
+                    if (! $evidence instanceof UploadedFile) {
+                        continue;
+                    }
+
+                    $filename = FileWorkOrder::storeFile(
+                        $evidence,
+                        $storedFiles
+                    );
+                    $order->files()->create([
+                        'url' => $filename,
+                    ]);
+                }
+
+                return $order->fresh()->load(self::detailRelations());
+            });
+
+        } catch (Throwable $exception) {
+            self::deleteFiles($storedFiles);
+
+            throw $exception;
+        }
     }
 
-    public function operator()
+    public static function searchList(array $filters)
     {
-        return $this->belongsTo(User::class, 'operator_id');
+        $query = self::query()
+            ->with(['unit:id,econame', 'mechanic:id,name'])
+            ->withCount([
+                'purchaseOrders as purchase_orders_count' => fn ($query) => $query->where('status', 'Aprobada'),
+            ])
+            ->withSum([
+                'purchaseOrders as purchase_orders_sum_cost' => fn ($query) => $query->where('status', 'Aprobada'),
+            ], 'cost')
+            ->latest('id');
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($builder) use ($search) {
+                $builder->where('folio', 'like', "%{$search}%")
+                    ->orWhereHas('unit', function ($unitQuery) use ($search) {
+                        $unitQuery->where('econame', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if (! empty($filters['only_open'])) {
+            $query->where('status', '!=', 'Finalizado');
+        }
+
+        return $query->get();
     }
 
-    public function mechanic()
+    public static function createRegister(array $data, array $files = []): self
     {
-        return $this->belongsTo(User::class, 'mechanic_id');
+        return DB::transaction(function () use ($data, $files) {
+            $data['mechanic_id'] = $data['work_type'] === 'Externo' ? null : ($data['mechanic_id'] ?? null);
+            $data['folio'] = GeneratesAnnualFolio::for(self::class, 'OT');
+            $order = self::create($data);
+
+            $order->addFiles($files);
+
+            return $order->load(self::detailRelations());
+        });
     }
 
-    public function creator()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
 
-    public function startedBy()
-    {
-        return $this->belongsTo(User::class, 'started_by');
-    }
-
-    public function closedBy()
-    {
-        return $this->belongsTo(User::class, 'closed_by');
-    }
-
-    public function purchaseOrders()
-    {
-        return $this->hasMany(PurchaseOrder::class, 'work_order_id');
-    }
 }

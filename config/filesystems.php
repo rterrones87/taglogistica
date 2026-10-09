@@ -44,7 +44,15 @@ return [
             'throw' => false,
         ],
 
-        'evidencias' => [
+        'evidencias-ordenes-trabajo' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/maintenance/evidencias'),
+            'url' => env('APP_URL').'/storage/maintenance/evidencias/',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
+        'evidencias-ordenes-compra' => [
             'driver' => 'local',
             'root' => storage_path('app/public/maintenance/evidencias'),
             'url' => env('APP_URL').'/storage/maintenance/evidencias/',

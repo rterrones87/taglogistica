@@ -33,7 +33,7 @@ class WorkOrderController extends Controller
     {
         try {
             $data = array_merge($request->validated(), ['created_by' => $request->user()->id]);
-            $order = WorkOrder::createRegister($data);
+            $order = WorkOrder::createRegister($data,$request->allFiles());
 
             Log::channel(self::LOG_CHANNEL)->info('Orden de trabajo creada.', [
                 'user_id' => $request->user()->id,

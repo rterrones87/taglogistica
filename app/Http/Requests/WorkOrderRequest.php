@@ -15,6 +15,7 @@ class WorkOrderRequest extends FormRequest
     public function rules(): array
     {
         $vehicleCategories = ['Tractor', 'Remolque', 'Dolly', 'Plataforma', 'Caja Refrigerada'];
+
         return [
             'unit_category' => ['required', Rule::in([...$vehicleCategories, 'Gastos de accidentes', 'Gastos de gruas', 'Mala operacion del operador', 'Rescate carretero'])],
             'maintenance_type' => [Rule::requiredIf(in_array($this->unit_category, $vehicleCategories, true)), 'nullable', Rule::in(['Preventivo', 'Correctivo'])],
@@ -25,6 +26,11 @@ class WorkOrderRequest extends FormRequest
             'mechanic_id' => [Rule::requiredIf($this->work_type === 'Interno'), 'nullable', Rule::exists('users', 'id')->where(fn($query) => $query->where('role_id', 11)->where('active', 1)->where('zombie', 0))],
             'failure_description' => ['required', 'string', 'max:5000'],
             'work_type' => ['required', Rule::in(['Interno', 'Externo'])],
+
+            'evidences' => ['nullable', 'array', 'max:5', Rule::prohibitedIf($this->work_type !== 'Interno')],
+            'evidences.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
+            'deleted_file_ids' => ['nullable', 'array', Rule::prohibitedIf($this->work_type !== 'Interno')],
+            'deleted_file_ids.*' => ['integer', 'distinct', 'exists:file_work_orders,id'],
         ];
     }
 }
