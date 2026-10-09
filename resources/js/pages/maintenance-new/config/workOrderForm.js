@@ -1,3 +1,5 @@
+export const MAX_EVIDENCE_FILES = 5;
+
 export const workOrderCategories = [
     'Tractor',
     'Remolque',

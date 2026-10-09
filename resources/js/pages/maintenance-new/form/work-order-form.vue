@@ -342,6 +342,7 @@ import {
     purchaseOrderColumns,
     vehicleCategories,
     workOrderCategories,
+    MAX_EVIDENCE_FILES
 } from '../config/workOrderForm';
 
 const route = useRoute();
