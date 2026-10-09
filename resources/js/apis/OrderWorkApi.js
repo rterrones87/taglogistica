@@ -25,8 +25,8 @@ export async function createWorkOrderApi(data) {
 
 //Actualizar ordenes de trabajo
 export async function updateWorkOrderApi(id, data) {
+    data.append('_method', 'PUT');
     const response = await axios.put(`${endpoint}/${id}`, data);
-
     return response.data;
 }
 
