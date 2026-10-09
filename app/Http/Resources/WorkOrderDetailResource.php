@@ -25,7 +25,7 @@ class WorkOrderDetailResource extends JsonResource
             'purchase_orders' => PurchaseOrderSummaryResource::collection( // Ordenes de Compra
                 $this->whenLoaded('purchaseOrders')
             ),
-            'files' => FileWorkOrderResource::collection($this->getEvidencesWorkOrders()),  //Evidencias ed ordenes de trabajo, unicamente para ordenes de compra Internas
+            'evidence_files' => FileWorkOrderResource::collection($this->getEvidencesWorkOrders()),  //Evidencias ed ordenes de trabajo, unicamente para ordenes de compra Internas
             'started_by_user' => optional($this->startedBy)->name, // o bien: $this->startedBy?->name,
             'started_at' => $this->started_at,
             'closed_by_user' => optional($this->closedBy)->name,  // o bien: $this->closedBy?->name,

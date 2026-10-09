@@ -86,7 +86,7 @@
                         <div class="form-item">
                             <label>Tipo de trabajo *</label>
 
-                            <select v-model="item.work_type" required>
+                            <select v-model="item.work_type" required :disabled="isEditing">
                                 <option value="">Seleccione</option>
                                 <option>Interno</option>
                                 <option>Externo</option>
@@ -137,7 +137,7 @@
                 </section>
 
                 <!-- Ordenes de compra -->
-                <section v-if="isEditing && item.work_type !== 'Interno'" class="border-t pt-4">
+                <section v-if="isEditing && item.work_type !== 'Interno' && item.status === 'En Proceso'" class="border-t pt-4">
                     <h3 class="mb-3 text-xl font-bold">Ordenes de compra</h3>
 
                     <div
@@ -168,7 +168,7 @@
                 </section>
 
                 <!-- Evidencias: Solo cuando es de tipo interno -->
-                <section v-if="isEditing && item.work_type === 'Interno'" class="border-t pt-4">
+                <section v-if="isEditing && item.work_type === 'Interno' && item.status === 'En Proceso'" class="border-t pt-4">
 
                     <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
                     
@@ -186,7 +186,7 @@
                             </div>
 
                             <label
-                                v-if="canManageFiles && currentEvidences.length < 5"
+                                v-if="currentEvidences.length < 5"
                                 class="block cursor-pointer rounded border-2 border-dashed border-blue-300 bg-white p-4 text-center text-sm text-blue-700 hover:bg-blue-50"
                             >
                                 Seleccionar evidencias
