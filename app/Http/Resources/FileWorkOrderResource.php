@@ -23,7 +23,7 @@ class FileWorkOrderResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type,
             'name' => "Evidencia {$this->evidence_number}.{$extension}",
-            'url' => Storage::url($this->url),
+            'url' => Storage::disk(FileWorkOrder::DISK_FILE)->url($this->url),
             'is_image' => in_array($extension, [
                 'jpg',
                 'jpeg',

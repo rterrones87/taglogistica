@@ -234,7 +234,6 @@
                                     </div>
 
                                     <button
-                                        v-if="canManageFiles"
                                         type="button"
                                         class="rounded px-2 py-1 text-sm text-red-600 hover:bg-red-50"
                                         @click="removeFile(file, 'evidence')"
