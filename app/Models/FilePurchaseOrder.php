@@ -33,6 +33,6 @@ class FilePurchaseOrder extends Model
 
     public static function diskForType(int $type): string
     {
-        return $type === self::TYPE_QUOTATION ? 'cotizacion' : 'evidencias';
+        return $type === self::TYPE_QUOTATION ? 'cotizacion' : 'evidencias-ordenes-compra';
     }
 }

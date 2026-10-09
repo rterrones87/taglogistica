@@ -8,6 +8,7 @@ class WorkOrderDetailResource extends JsonResource
 {
     public function toArray($request): array
     {
+
         return [
             'id' => $this->id,
             'folio' => $this->folio,
@@ -21,16 +22,13 @@ class WorkOrderDetailResource extends JsonResource
             'failure_description' => $this->failure_description,
             'work_type' => $this->work_type,
             'status' => $this->status,
-            'purchase_orders' => PurchaseOrderSummaryResource::collection(
+            'purchase_orders' => PurchaseOrderSummaryResource::collection( // Ordenes de Compra
                 $this->whenLoaded('purchaseOrders')
             ),
-            'started_by_user' => $this->whenLoaded('startedBy', fn () => [
-                'name' => $this->startedBy->name,
-            ]),
+            'evidence_files' => FileWorkOrderResource::collection($this->getEvidencesWorkOrders()),  //Evidencias ed ordenes de trabajo, unicamente para ordenes de compra Internas
+            'started_by_user' => optional($this->startedBy)->name, // o bien: $this->startedBy?->name,
             'started_at' => $this->started_at,
-            'closed_by_user' => $this->whenLoaded('closedBy', fn () => [
-                'name' => $this->closedBy->name,
-            ]),
+            'closed_by_user' => optional($this->closedBy)->name,  // o bien: $this->closedBy?->name,
             'closed_at' => $this->closed_at,
         ];
     }
