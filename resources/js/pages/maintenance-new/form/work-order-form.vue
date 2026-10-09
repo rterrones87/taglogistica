@@ -499,15 +499,32 @@ async function save() {
         if (item.work_type === 'Externo') item.mechanic_id = null;
         if (!vehicleCategory.value) item.maintenance_type = null;
 
-        let order;
+        let response;
         if (isEditing.value) {
-            order = await updateWorkOrderApi(item.id, buildUpdateFormData());
+            response = await updateWorkOrderApi(item.id, buildUpdateFormData());
         } else {
-            order = await createWorkOrderApi(item);
+            response = await createWorkOrderApi(item);
         }
 
+        const savedOrder = response.data || response;
+
+        // 1. Actualizar el item local con la respuesta fresca del backend (trae los archivos ya guardados)
+        Object.assign(item, savedOrder);
+
+        // 2. Limpiar los estados temporales de evidencias y archivos eliminados
+        evidences.value.forEach(file => {
+            if (file.preview) URL.revokeObjectURL(file.preview);
+        });
+        evidences.value = [];
+        deletedFileIds.value = [];
+
         dialogs.fire('Excelente', 'Orden guardada correctamente', 'success');
-        router.push(`/panel/maintenance-new/work-orders/${order.data.id}`); 
+
+        // 3. Redirigir asegurando que la ruta recargue si es necesario
+        const newId = savedOrder.id;
+        if (route.params.id !== String(newId)) {
+            router.push(`/panel/maintenance-new/work-orders/${newId}`);
+        }
 
     } catch (error) {
         errors.value = error.response?.data?.errors || {};
