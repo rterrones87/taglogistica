@@ -11,7 +11,7 @@ class FileWorkOrder extends Model
 {
     use HasFactory;
 
-    const DISK_FILE = 'work_orders';
+    const DISK_FILE = 'evidencias-ordenes-trabajo';
 
     protected $fillable = [
         'work_order_id',
