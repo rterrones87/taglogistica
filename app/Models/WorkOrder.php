@@ -92,16 +92,23 @@ class WorkOrder extends Model
         return $this->load(self::detailRelations());
     }
 
-    public function updateRegister(array $data): self
+    public function updateRegister(array $data, array $files = []): self
     {
         if ($this->status === 'Finalizado') {
             throw new UnprocessableEntityHttpException('Una orden cerrada no puede editarse.');
         }
 
         $data['mechanic_id'] = $data['work_type'] === 'Externo' ? null : ($data['mechanic_id'] ?? null);
-        $this->update($data);
 
-        return $this->fresh()->load(self::detailRelations());
+        return DB::transaction(function () use ($data, $files) {
+
+            $this->update($data);
+            $this->addFiles($files);
+
+            return $this->fresh()->load(self::detailRelations());
+        });
+
+
     }
 
     public function startOrder(int $userId): self
@@ -224,15 +231,12 @@ class WorkOrder extends Model
         return $query->get();
     }
 
-    public static function createRegister(array $data, array $files = []): self
+    public static function createRegister(array $data): self
     {
-        return DB::transaction(function () use ($data, $files) {
+        return DB::transaction(function () use ($data) {
             $data['mechanic_id'] = $data['work_type'] === 'Externo' ? null : ($data['mechanic_id'] ?? null);
             $data['folio'] = GeneratesAnnualFolio::for(self::class, 'OT');
             $order = self::create($data);
-
-            $order->addFiles($files);
-
             return $order->load(self::detailRelations());
         });
     }
