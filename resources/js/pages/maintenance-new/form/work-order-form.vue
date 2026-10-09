@@ -487,8 +487,6 @@ function buildUpdateFormData() {
     });
     deletedFileIds.value.forEach((id) => formData.append('deleted_file_ids[]', id));
 
-    formData.append('_method', 'PUT');
-
     return formData;
 }
 
