@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Throwable;
 use Illuminate\Http\UploadedFile;
-
+use Illuminate\Support\Facades\Storage;
 
 class WorkOrder extends Model
 {
@@ -92,7 +92,7 @@ class WorkOrder extends Model
         return $this->load(self::detailRelations());
     }
 
-    public function updateRegister(array $data, array $files = []): self
+    public function updateRegister(array $data, array $files = [], array $deletedFileIds = []): self
     {
         if ($this->status === 'Finalizado') {
             throw new UnprocessableEntityHttpException('Una orden cerrada no puede editarse.');
@@ -100,15 +100,21 @@ class WorkOrder extends Model
 
         $data['mechanic_id'] = $data['work_type'] === 'Externo' ? null : ($data['mechanic_id'] ?? null);
 
-        return DB::transaction(function () use ($data, $files) {
+        return DB::transaction(function () use ($data, $files, $deletedFileIds) {
 
-            $this->update($data);
+            // 1. Actualizar datos de la orden (quitando campos que no son columnas de la tabla)
+            $this->update(collect($data)->except(['deleted_file_ids', 'evidences'])->toArray());
+
+            // 2. Eliminar archivos seleccionados si existen
+            if (!empty($deletedFileIds)) {
+                $this->deleteFiles($deletedFileIds);
+            }
+
+            // 3. Agregar nuevas evidencias
             $this->addFiles($files);
 
             return $this->fresh()->load(self::detailRelations());
         });
-
-
     }
 
     public function startOrder(int $userId): self
@@ -197,6 +203,14 @@ class WorkOrder extends Model
             throw $exception;
         }
     }
+
+    public function deleteFiles(array $files): void
+    {
+        foreach ($files as $file) {
+            Storage::disk($file['disk'])->delete($file['name']);
+        }
+    }
+
 
     public static function searchList(array $filters)
     {
