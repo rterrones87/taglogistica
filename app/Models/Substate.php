@@ -16,6 +16,7 @@ class Substate extends Model
     protected $fillable = [
         'type_operation',
         'name',
-        'zombie'
+        'zombie',
+        'status',
     ];
 }

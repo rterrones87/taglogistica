@@ -47,6 +47,16 @@ class NotificationHelper
 
     private static function notifyUsersByRoles(array $roleIds, string $title, string $body, array $data = []): array
     {
+
+        if (!filter_var(env('FCM_ENABLED', false), FILTER_VALIDATE_BOOL)) {
+            return [
+                'success' => 0,
+                'failed' => 0,
+                'total' => 0,
+                'errors' => [],
+            ];
+        }
+
         $fcmService = app(FcmService::class);
         
         // Consultar usuarios Administrador (1) y Dirección (7)

@@ -275,11 +275,11 @@ class Service extends Model
      * Retorna el substate mínimo que debe haberse alcanzado para
      * que el servicio pueda pasar automáticamente a En Ruta.
      * Importación (1) y Carga Suelta (3): substate 1 (Cargar en Puerto)
-     * Exportación (2): substate 10 (Vacío Cargado)
+     * Exportación (2): substate 11 (Inicia Flete)
      */
     public function enRutaThresholdSubstate(): int
     {
-        return $this->type_operation === 2 ? 10 : 1;
+        return $this->type_operation === 2 ? 11 : 1;
     }
 
     /**

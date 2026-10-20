@@ -66,15 +66,8 @@ const loadSubstates = async () => {
 
 onMounted(loadSubstates);
 
-// Calcula el índice actual y el siguiente estado si existe
-const currentIndex = computed(() =>
-  stateList.value.findIndex(s => s.id === currentStateId.value)
-);
-
 const nextState = computed(() => {
-  if (currentIndex.value === -1) return null;
-  const nextIndex = currentIndex.value + 1;
-  return stateList.value[nextIndex] || null;
+  return stateList.value.find(state => state.id > currentStateId.value) || null;
 });
 
 async function applyState() {
@@ -107,7 +100,7 @@ const changeState = async () => {
   if (!nextState.value) return;
 
   try {
-    if(nextState.value.id == 5 || nextState.value.id == 14) {
+    if (nextState.value.id == 6 || nextState.value.id == 15) {
 
       showCameraModal.value = true;
 

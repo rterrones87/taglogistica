@@ -131,9 +131,9 @@
 
     // Computed property para determinar si se pueden editar los campos generales del servicio
     // (cliente, tipo operación, terminal, fechas, tipo unidad, IMO)
-    // Habilitado en estados 1 y 2, y en estado 3 antes de Inicia Flete:
-    //   · Importación (1) y Carga Suelta (3): substate 1 (Cargar en Puerto)
-    //   · Exportación (2): substate 10 (Vacío Cargado)
+    // Habilitado en estados 1 y 2, y en estado 3 antes de Inicia Flete para
+    // Importación y Carga Suelta (substate 1, Cargar en Puerto). Exportación
+    // pasa a En Ruta en substate 11 (Inicia Flete), cuando deja de ser editable.
     const canEditServiceFields = computed(() => {
         if (!hasPermission('services.edit')) return false;
         if (!isEditing.value) return true;
@@ -141,9 +141,6 @@
         if (item.value.state_id === 3) {
             if (item.value.type_operation == 1 || item.value.type_operation == 3) {
                 return item.value.substate_id == 1;
-            }
-            if (item.value.type_operation == 2) {
-                return item.value.substate_id == 10;
             }
         }
         return false;
@@ -159,4 +156,3 @@
 
     
 </script>
-  

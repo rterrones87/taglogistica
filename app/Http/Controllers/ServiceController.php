@@ -688,8 +688,25 @@ class ServiceController extends Controller
      */
     public function change_substate(Request $request)
     {
-        $data = $request->all();
-        $service = Service::find($data['service_id']);
+        $data = $request->validate([
+            'service_id' => 'required|integer|exists:services,id',
+            'substate_id' => 'required|integer|exists:substates,id',
+        ]);
+
+        $service = Service::findOrFail($data['service_id']);
+
+        $nextSubstate = Substate::where('type_operation', $service->type_operation)
+            ->where('zombie', 0)
+            ->where('status', 1)
+            ->where('id', '>', $service->substate_id)
+            ->orderBy('id')
+            ->first();
+
+        if (!$nextSubstate || $nextSubstate->id !== $data['substate_id']) {
+            return response()->json([
+                'message' => 'El subestado seleccionado no es el siguiente subestado activo del viaje.',
+            ], 422);
+        }
 
         // Validación: "Inicia Flete" (substate 2 y 11) requiere gastos aprobados y carta porte
         if (in_array($data['substate_id'], [2, 11])) {
@@ -717,19 +734,19 @@ class ServiceController extends Controller
         // la transición ocurre automáticamente al cumplirse ambas condiciones
         // (initial_expenses aprobado + substate >= umbral). Ver checkAndTransitionToEnRuta().
 
-        if($data['substate_id'] == 5)   // Termino descarga → En Destino
+        if ($data['substate_id'] == 6)   // Salida de Cliente → En Destino
             $service->state_id = 4;
 
-        if($data['substate_id'] == 8)   // Entrega de vacío → Terminado
+        if ($data['substate_id'] == 8)   // Entrega de vacío → Terminado
             $service->state_id = 5;
 
         // EXPO
         // substate 11 (Inicia Flete) ya no dispara En Ruta directamente.
 
-        if($data['substate_id'] == 14)  // Finaliza Carga → En Destino
+        if ($data['substate_id'] == 15)  // Salida de Cliente → En Destino
             $service->state_id = 4;
 
-        if($data['substate_id'] == 18)  // Ingreso de Carga Concluido → Terminado
+        if ($data['substate_id'] == 18)  // Ingreso de Carga Concluido → Terminado
             $service->state_id = 5;
 
         $service->update();

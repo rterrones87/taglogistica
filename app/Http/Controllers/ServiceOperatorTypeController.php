@@ -33,6 +33,7 @@ class ServiceOperatorTypeController extends Controller
 
         return Substate::where('type_operation', $service->type_operation)
             ->where('zombie', 0)
+            ->where('status', 1)
             ->orderBy('id')
             ->get(['id', 'name']);
     }

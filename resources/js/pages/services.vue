@@ -524,18 +524,15 @@ const { hasPermission, hasAnyPermission } = usePermissions();
 
 // Regla de visibilidad del botón Editar:
 // - Estado 1 (Solicitado) o 2 (Programado): siempre editable
-// - Estado 3 (En Ruta): solo antes de Inicia Flete
-//   · Importación (1) y Carga Suelta (3): substate 1 (Cargar en Puerto)
-//   · Exportación (2): substate 10 (Vacío Cargado)
+// - Estado 3 (En Ruta): solo antes de Inicia Flete para Importación y Carga Suelta
+//   (substate 1, Cargar en Puerto). En Exportación el viaje pasa a En Ruta al
+//   llegar a substate 11 (Inicia Flete), por lo que ya no es editable.
 const canEditService = (row) => {
     if (!hasPermission('services.edit')) return false;
     if (row.state_id <= 2) return true;
     if (row.state_id !== 3) return false;
     if (row.type_operation == 1 || row.type_operation == 3) {
         return row.substate_id == 1;
-    }
-    if (row.type_operation == 2) {
-        return row.substate_id == 10;
     }
     return false;
 };
