@@ -104,7 +104,7 @@
                         <div>
                             <h3 class="text-xl font-bold">Archivos de la orden</h3>
                             <p class="text-sm text-gray-500">
-                                Una cotizacion en PDF/ y hasta cinco evidencias.
+                                Una cotizacion en PDF o imagen y hasta cinco evidencias.
                             </p>
                         </div>
 
@@ -143,8 +143,18 @@
                             </label>
 
                             <div v-if="currentQuotation" class="mt-3 flex items-center gap-3 rounded border bg-white p-3">
-                                <div class="flex h-10 w-10 items-center justify-center rounded bg-red-100 font-bold text-red-700">
-                                    PDF o imagen
+                                <img
+                                    v-if="currentQuotation.preview || (currentQuotation.is_image && currentQuotation.url)"
+                                    :src="currentQuotation.preview || currentQuotation.url"
+                                    alt="Vista previa de cotizacion"
+                                    class="h-10 w-10 rounded object-cover"
+                                >
+
+                                <div
+                                    v-else
+                                    class="flex h-10 w-10 items-center justify-center rounded bg-red-100 text-xs font-bold text-red-700"
+                                >
+                                    {{ currentQuotation.is_image ? 'IMG' : 'PDF' }}
                                 </div>
 
                                 <div class="min-w-0 grow">
@@ -280,7 +290,7 @@
 </template>
 
 <script setup>
-import { computed, inject, onMounted, reactive, ref } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getWorkshopCatalogsApi } from '../../../apis/WorkshopCatalogApi';
 import {
@@ -323,13 +333,22 @@ const catalogs = reactive(createPurchaseOrderCatalogs());
 const errors = ref({});
 const isSaving = ref(false);
 const quotation = ref(null);
+const quotationPreview = ref(null);
 const evidences = ref([]);
 const deletedFileIds = ref([]);
 
 const selectedWorkOrder = computed(() => catalogs.work_orders.find((order) => order.id === item.work_order_id));
 const selectedUnitName = computed(() => selectedWorkOrder.value?.unit?.econame || item.work_order?.unit?.econame || '');
 const currentQuotation = computed(() => {
-    if (quotation.value) return { name: quotation.value.name, file: quotation.value };
+    if (quotation.value) {
+        return {
+            name: quotation.value.name,
+            file: quotation.value,
+            preview: quotationPreview.value,
+            is_image: quotation.value.type.startsWith('image/'),
+        };
+    }
+
     if (item.quotation_file && !deletedFileIds.value.includes(item.quotation_file.id)) {
         return item.quotation_file;
     }
@@ -361,13 +380,26 @@ onMounted(async () => {
     } 
 });
 
+onBeforeUnmount(() => {
+    if (quotationPreview.value) URL.revokeObjectURL(quotationPreview.value);
+
+    evidences.value.forEach((file) => {
+        if (file.preview) URL.revokeObjectURL(file.preview);
+    });
+});
+
 async function selectQuotation(event) {
     const file = event.target.files[0] || null;
     event.target.value = '';
 
     if (!file) return;
 
+    if (quotationPreview.value) URL.revokeObjectURL(quotationPreview.value);
+
     quotation.value = file;
+    quotationPreview.value = file.type.startsWith('image/')
+        ? URL.createObjectURL(file)
+        : null;
 }
 
 async function selectEvidences(event) {
@@ -393,7 +425,10 @@ async function selectEvidences(event) {
 async function removeFile(file, type) {
     if (!file.id) {
         if (type === 'quotation') {
+            if (quotationPreview.value) URL.revokeObjectURL(quotationPreview.value);
+
             quotation.value = null;
+            quotationPreview.value = null;
         } else {
             const stagedIndex = evidences.value.indexOf(file);
             const stagedFile = evidences.value[stagedIndex];
