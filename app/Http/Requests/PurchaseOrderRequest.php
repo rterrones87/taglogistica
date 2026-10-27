@@ -21,7 +21,7 @@ class PurchaseOrderRequest extends FormRequest
             'cost' => ['required', 'numeric', 'min:0.01'],
             'payment_condition' => ['nullable', Rule::in(['Contado', 'Credito'])],
             'credit_days' => [Rule::requiredIf($this->payment_condition === 'Credito'), 'nullable', 'integer', 'min:1', 'max:3650'],
-            'quotation' => ['required', 'file', 'mimes:pdf', 'max:10240'],
+            'quotation' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
             'evidences' => ['required', 'array', 'min:1', 'max:5'],
             'evidences.*' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
         ];
