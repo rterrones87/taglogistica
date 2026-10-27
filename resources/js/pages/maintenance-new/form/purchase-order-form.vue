@@ -104,7 +104,7 @@
                         <div>
                             <h3 class="text-xl font-bold">Archivos de la orden</h3>
                             <p class="text-sm text-gray-500">
-                                Una cotizacion en PDF y hasta cinco evidencias.
+                                Una cotizacion en PDF/ y hasta cinco evidencias.
                             </p>
                         </div>
 
@@ -121,7 +121,7 @@
                             <div class="mb-3 flex items-center justify-between gap-2">
                                 <div>
                                     <h4 class="font-semibold">Cotizacion</h4>
-                                    <p class="text-xs text-gray-500">PDF, maximo 10 MB</p>
+                                    <p class="text-xs text-gray-500">PDF o imagen, maximo 10 MB</p>
                                 </div>
 
                                 <span class="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700">
@@ -144,7 +144,7 @@
 
                             <div v-if="currentQuotation" class="mt-3 flex items-center gap-3 rounded border bg-white p-3">
                                 <div class="flex h-10 w-10 items-center justify-center rounded bg-red-100 font-bold text-red-700">
-                                    PDF
+                                    PDF o imagen
                                 </div>
 
                                 <div class="min-w-0 grow">
