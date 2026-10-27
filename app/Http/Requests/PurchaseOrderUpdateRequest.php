@@ -23,7 +23,7 @@ class PurchaseOrderUpdateRequest extends FormRequest
                 'min:1',
                 'max:3650',
             ],
-            'quotation' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'quotation' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
             'evidences' => ['nullable', 'array', 'max:5'],
             'evidences.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
             'deleted_file_ids' => ['nullable', 'array'],

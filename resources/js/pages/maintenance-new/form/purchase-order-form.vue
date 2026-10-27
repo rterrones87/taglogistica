@@ -137,7 +137,7 @@
                                 <input
                                     class="hidden"
                                     type="file"
-                                    accept="application/pdf"
+                                    accept="application/pdf,image/jpeg,image/png,image/webp"
                                     @change="selectQuotation"
                                 >
                             </label>
